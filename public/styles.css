@@ -17,7 +17,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #020617;
     --paper: #0f172a;
     --surface-hover: #1e293b;
@@ -28,6 +28,18 @@
     --line: #334155;
     --shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #020617;
+  --paper: #0f172a;
+  --surface-hover: #1e293b;
+  --ink: #f8fafc;
+  --muted: #cbd5e1;
+  --brand: #60a5fa;
+  --brand-2: #fb923c;
+  --line: #334155;
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
 }
 
 * {
@@ -53,6 +65,30 @@ a {
   max-width: 1180px;
   margin: 0 auto;
   padding: 28px 20px 60px;
+}
+
+.toolbar {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 20px 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.theme-toggle {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.theme-toggle:hover {
+  background: var(--surface-hover);
 }
 
 .hero {
@@ -206,7 +242,8 @@ select {
   border-radius: 8px;
   padding: 9px 10px;
   font: inherit;
-  background: #fff;
+  background: var(--paper);
+  color: var(--ink);
 }
 
 textarea {
@@ -230,6 +267,16 @@ tr td {
   padding: 8px 6px;
   text-align: left;
   font-size: 0.9rem;
+}
+
+:root[data-theme="dark"] tr th,
+:root[data-theme="dark"] tr td {
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] tr th {
+  background-color: var(--surface-hover);
+  color: var(--muted);
 }
 
 tr th {
