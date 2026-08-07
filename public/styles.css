@@ -1,14 +1,33 @@
 :root {
-  --bg: #f3efe4;
-  --paper: #fffdf8;
-  --ink: #1f2a33;
-  --muted: #5f6e78;
-  --brand: #0f5a5f;
-  --brand-2: #f28f3b;
-  --line: #dfd7c8;
-  --ok: #1b9e77;
-  --danger: #b42318;
-  --shadow: 0 16px 45px rgba(10, 25, 30, 0.12);
+  --bg: #f8fafc;
+  --paper: #ffffff;
+  --surface-hover: #f1f5f9;
+  --ink: #1f2937;
+  --muted: #6b7280;
+  --brand: #0f4c81;
+  --brand-2: #f97316;
+  --line: #e5e7eb;
+  --ok: #10b981;
+  --warning: #fbbf24;
+  --danger: #ef4444;
+  --revenue: #2563eb;
+  --expense: #ea580c;
+  --outorga: #8b5cf6;
+  --shadow: 0 16px 40px rgba(15, 76, 129, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #020617;
+    --paper: #0f172a;
+    --surface-hover: #1e293b;
+    --ink: #f8fafc;
+    --muted: #cbd5e1;
+    --brand: #60a5fa;
+    --brand-2: #fb923c;
+    --line: #334155;
+    --shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
+  }
 }
 
 * {
@@ -20,13 +39,14 @@ body {
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(80rem 40rem at 90% -10%, rgba(242, 143, 59, 0.15), transparent),
-    radial-gradient(60rem 30rem at -10% 10%, rgba(15, 90, 95, 0.12), transparent),
+    radial-gradient(80rem 40rem at 90% -10%, rgba(249, 115, 22, 0.12), transparent),
+    radial-gradient(60rem 30rem at -10% 10%, rgba(15, 76, 129, 0.11), transparent),
     var(--bg);
 }
 
 a {
-  color: inherit;
+  text-decoration: none;
+  color: #464feb;
 }
 
 .shell {
@@ -53,7 +73,7 @@ a {
   border-radius: 50%;
   right: -60px;
   top: -60px;
-  background: linear-gradient(180deg, rgba(242, 143, 59, 0.28), rgba(15, 90, 95, 0.22));
+  background: linear-gradient(180deg, rgba(249, 115, 22, 0.22), rgba(15, 76, 129, 0.2));
 }
 
 .title {
@@ -85,6 +105,11 @@ a {
   transform: translateY(8px);
   opacity: 0;
   animation: rise 560ms ease forwards;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.card:hover {
+  background: var(--surface-hover);
 }
 
 .card:nth-child(2) {
@@ -107,8 +132,8 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #ecf6f7;
-  color: #0f5a5f;
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+  color: var(--brand);
   border-radius: 999px;
   font-size: 0.78rem;
   padding: 4px 10px;
@@ -116,7 +141,7 @@ a {
 }
 
 .btn {
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 10px;
   padding: 10px 14px;
   font-weight: 600;
@@ -132,12 +157,13 @@ a {
 .btn-primary {
   background: var(--brand);
   color: #fff;
+  border-color: color-mix(in srgb, var(--brand) 65%, black);
 }
 
 .btn-secondary {
-  background: #fff2e7;
-  color: #7a440f;
-  border: 1px solid #f6c69b;
+  background: color-mix(in srgb, var(--brand-2) 16%, var(--paper));
+  color: color-mix(in srgb, var(--brand-2) 58%, var(--ink));
+  border: 1px solid color-mix(in srgb, var(--brand-2) 45%, var(--line));
 }
 
 .actions {
@@ -176,7 +202,7 @@ input,
 textarea,
 select {
   width: 100%;
-  border: 1px solid #cfc4b2;
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 9px 10px;
   font: inherit;
@@ -198,16 +224,16 @@ table {
   min-width: 880px;
 }
 
-th,
-td {
-  border-bottom: 1px solid #ede5d8;
+tr th,
+tr td {
+  border: 1px solid #e6e6e6;
   padding: 8px 6px;
   text-align: left;
   font-size: 0.9rem;
 }
 
-th {
-  background: #fbf7ef;
+tr th {
+  background-color: #f5f5f5;
   font-size: 0.8rem;
   color: #49545e;
   text-transform: uppercase;
