@@ -223,7 +223,7 @@ export async function gerarTemplateSimuladorExcel(): Promise<Buffer> {
   ];
 
   worksheet.addRow({
-    dataSimulacao: "2026-08-07",
+    dataSimulacao: "07/08/2026",
     entregavel: "Ampliação de patio",
     capexAtual: 15000000,
     capexSim: 16200000,
