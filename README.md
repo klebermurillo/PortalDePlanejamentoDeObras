@@ -42,6 +42,14 @@ Com o servidor rodando, abra:
 - Simulador de cenarios: `http://localhost:3000/simulador.html`
 - Tarifador: `http://localhost:3000/tarifador.html`
 
+### Simulador de cenarios
+
+- Dashboard executivo com comparativo entre cenario atual e novo cenario
+- Curva S em SVG gerada localmente no navegador
+- Indicadores de aderencia atual e simulada
+- Painel de parametros para simular custo, prazo, risco, outorga e multa
+- Area operacional abaixo com cadastro manual, importacao Excel e tabela de registros
+
 ### Persistencia local
 
 - Banco SQLite local: `data/portal.db`
