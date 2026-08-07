@@ -23,7 +23,6 @@ function limparMensagem(el) {
 function payloadFromForm() {
   const data = new FormData(form);
   return {
-    idPrimavera: String(data.get("idPrimavera") || "").trim(),
     usuario: String(data.get("usuario") || "").trim(),
     dataSimulacao: String(data.get("dataSimulacao") || "").trim() || undefined,
     entregavel: String(data.get("entregavel") || "").trim() || undefined,
@@ -37,7 +36,6 @@ function payloadFromForm() {
 }
 
 function preencherForm(registro) {
-  form.idPrimavera.value = registro.idPrimavera || "";
   form.usuario.value = registro.usuario || "";
   form.dataSimulacao.value = registro.dataSimulacao || "";
   form.entregavel.value = registro.entregavel || "";
@@ -63,7 +61,6 @@ function renderTabela() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${registro.id}</td>
-      <td>${registro.idPrimavera ?? ""}</td>
       <td>${registro.usuario ?? ""}</td>
       <td>${registro.entregavel ?? ""}</td>
       <td>${Number(registro.capexEstimadoAtual || 0).toLocaleString("pt-BR")}</td>
@@ -184,7 +181,7 @@ gerarPdfBtn.addEventListener("click", async () => {
   const linhas = registros
     .map(
       (r) =>
-        `<tr><td>${r.idPrimavera ?? ""}</td><td>${r.usuario ?? ""}</td><td>${r.entregavel ?? ""}</td><td>${r.capexEstimadoAtual ?? ""}</td><td>${r.capexEstimadoSim ?? ""}</td></tr>`
+        `<tr><td>${r.usuario ?? ""}</td><td>${r.entregavel ?? ""}</td><td>${r.capexEstimadoAtual ?? ""}</td><td>${r.capexEstimadoSim ?? ""}</td></tr>`
     )
     .join("");
 
@@ -204,7 +201,7 @@ gerarPdfBtn.addEventListener("click", async () => {
         <p>Total de registros: ${registros.length}</p>
         <table>
           <thead>
-            <tr><th>ID Primavera</th><th>Usuário</th><th>Entregável</th><th>Capex Atual</th><th>Capex Sim</th></tr>
+            <tr><th>Usuário</th><th>Entregável</th><th>Capex Atual</th><th>Capex Sim</th></tr>
           </thead>
           <tbody>${linhas}</tbody>
         </table>

@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { randomUUID } from "node:crypto";
 import { getDb } from "../db/sqlite";
 import { importarDadosDeArquivoExcel } from "./excelImportService";
 
@@ -19,7 +20,7 @@ export type SimuladorRegistro = {
 };
 
 export type NovoRegistroInput = {
-  idPrimavera: string;
+  idPrimavera?: string;
   usuario: string;
   dataSimulacao?: string;
   entregavel?: string;
@@ -73,6 +74,7 @@ export async function listarRegistrosSimulador(): Promise<SimuladorRegistro[]> {
 
 export async function criarRegistroSimulador(input: NovoRegistroInput): Promise<SimuladorRegistro> {
   const db = await getDb();
+  const idPrimaveraInterno = (input.idPrimavera ?? "").trim() || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
   const result = await db.run(
     `
     INSERT INTO simulador_registros (
@@ -89,7 +91,7 @@ export async function criarRegistroSimulador(input: NovoRegistroInput): Promise<
       updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     `,
-    input.idPrimavera,
+    idPrimaveraInterno,
     input.usuario,
     input.dataSimulacao ?? null,
     input.entregavel ?? null,
@@ -111,6 +113,13 @@ export async function criarRegistroSimulador(input: NovoRegistroInput): Promise<
 
 export async function atualizarRegistroSimulador(id: number, input: NovoRegistroInput): Promise<SimuladorRegistro | null> {
   const db = await getDb();
+  const existing = await db.get<DbRegistro>("SELECT * FROM simulador_registros WHERE id = ?", id);
+  if (!existing) {
+    return null;
+  }
+
+  const idPrimaveraInterno = (input.idPrimavera ?? "").trim() || existing.id_primavera || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
+
   await db.run(
     `
     UPDATE simulador_registros
@@ -127,7 +136,7 @@ export async function atualizarRegistroSimulador(id: number, input: NovoRegistro
         updated_at = datetime('now')
     WHERE id = ?
     `,
-    input.idPrimavera,
+    idPrimaveraInterno,
     input.usuario,
     input.dataSimulacao ?? null,
     input.entregavel ?? null,
@@ -203,7 +212,6 @@ export async function gerarTemplateSimuladorExcel(): Promise<Buffer> {
   const worksheet = workbook.addWorksheet("Simulador");
 
   worksheet.columns = [
-    { header: "ID PRIMAVERA", key: "idPrimavera", width: 20 },
     { header: "DATA SIMULACAO", key: "dataSimulacao", width: 18 },
     { header: "ENTREGAVEL", key: "entregavel", width: 30 },
     { header: "CAPEX ESTIMADO ATUAL", key: "capexAtual", width: 22 },
@@ -215,7 +223,6 @@ export async function gerarTemplateSimuladorExcel(): Promise<Buffer> {
   ];
 
   worksheet.addRow({
-    idPrimavera: "PRJ-001",
     dataSimulacao: "2026-08-07",
     entregavel: "Ampliação de patio",
     capexAtual: 15000000,

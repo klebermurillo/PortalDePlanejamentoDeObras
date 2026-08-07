@@ -21,7 +21,7 @@ apiRouter.get("/health", (_req: Request, res: Response) => {
 });
 
 const registroSchema = z.object({
-  idPrimavera: z.string().min(1),
+  idPrimavera: z.string().optional(),
   usuario: z.string().min(1),
   dataSimulacao: z.string().optional(),
   entregavel: z.string().optional(),

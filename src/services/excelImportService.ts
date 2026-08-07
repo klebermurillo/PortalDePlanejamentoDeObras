@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { randomUUID } from "node:crypto";
 import { RegistroSimulador } from "../types";
 
 function toDateStringFromExcelValue(value: unknown): string | undefined {
@@ -56,13 +57,39 @@ export async function importarDadosDeArquivoExcel(fileBuffer: Uint8Array, usuari
 
   const result: RegistroSimulador[] = [];
 
+  const hasMeaningfulValue = (value: unknown): boolean => {
+    if (value === null || value === undefined) {
+      return false;
+    }
+    if (typeof value === "string") {
+      return value.trim().length > 0;
+    }
+    if (typeof value === "number") {
+      return Number.isFinite(value);
+    }
+    return true;
+  };
+
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) {
       return;
     }
 
-    const idPrimavera = String(getCell(row, "ID PRIMAVERA") ?? "").trim();
-    if (!idPrimavera) {
+    const idPrimaveraRaw = String(getCell(row, "ID PRIMAVERA") ?? "").trim();
+    const idPrimavera = idPrimaveraRaw || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
+
+    const rowHasData = [
+      getCell(row, "DATA SIMULACAO"),
+      getCell(row, "ENTREGAVEL"),
+      getCell(row, "CAPEX ESTIMADO ATUAL"),
+      getCell(row, "CAPEX ESTIMADO SIM"),
+      getCell(row, "ANO ANTT SIM"),
+      getCell(row, "ANO REAL SIM"),
+      getCell(row, "PONTO DE ATENCAO"),
+      getCell(row, "CONTEXTO")
+    ].some(hasMeaningfulValue);
+
+    if (!rowHasData && !idPrimaveraRaw) {
       return;
     }
 
