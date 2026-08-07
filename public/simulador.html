@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador de Cenários</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <h1 class="title">Simulador de Cenários</h1>
+        <p class="subtitle">Fluxo local sem Microsoft: cadastro manual, atualização, exclusão, importação por planilha e PDF.</p>
+        <div class="actions">
+          <a href="/"><button class="btn btn-secondary">Voltar para Início</button></a>
+          <a href="/api/simulador/template"><button class="btn btn-primary">Baixar Modelo Excel</button></a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Novo Registro</h3>
+        <form id="registro-form">
+          <div class="form-grid">
+            <div>
+              <label for="idPrimavera">ID Primavera</label>
+              <input id="idPrimavera" name="idPrimavera" required />
+            </div>
+            <div>
+              <label for="usuario">Usuário</label>
+              <input id="usuario" name="usuario" required />
+            </div>
+            <div>
+              <label for="dataSimulacao">Data Simulação</label>
+              <input id="dataSimulacao" name="dataSimulacao" type="date" />
+            </div>
+            <div>
+              <label for="entregavel">Entregável</label>
+              <input id="entregavel" name="entregavel" />
+            </div>
+            <div>
+              <label for="capexEstimadoAtual">CAPEX Estimado Atual</label>
+              <input id="capexEstimadoAtual" name="capexEstimadoAtual" type="number" step="0.01" />
+            </div>
+            <div>
+              <label for="capexEstimadoSim">CAPEX Estimado Sim</label>
+              <input id="capexEstimadoSim" name="capexEstimadoSim" type="number" step="0.01" />
+            </div>
+            <div>
+              <label for="anoAnttSim">Ano ANTT Sim</label>
+              <input id="anoAnttSim" name="anoAnttSim" />
+            </div>
+            <div>
+              <label for="anoRealSim">Ano Real Sim</label>
+              <input id="anoRealSim" name="anoRealSim" />
+            </div>
+            <div>
+              <label for="pontoAtencao">Ponto de Atenção</label>
+              <input id="pontoAtencao" name="pontoAtencao" />
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <label for="contexto">Contexto</label>
+            <textarea id="contexto" name="contexto"></textarea>
+          </div>
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">Salvar Registro</button>
+            <button type="button" class="btn btn-secondary" id="cancelar-edicao" style="display:none;">Cancelar Edição</button>
+            <button type="button" class="btn btn-secondary" id="gerar-pdf">Gerar PDF da Lista</button>
+          </div>
+          <div id="form-msg" class="msg"></div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h3>Importação em Massa</h3>
+        <form id="upload-form">
+          <div class="form-grid">
+            <div>
+              <label for="uploadUsuario">Usuário responsável</label>
+              <input id="uploadUsuario" name="usuario" required />
+            </div>
+            <div>
+              <label for="arquivoExcel">Arquivo Excel</label>
+              <input id="arquivoExcel" name="arquivo" type="file" accept=".xlsx" required />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Importar Planilha</button>
+          </div>
+          <div id="upload-msg" class="msg"></div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h3>Registros</h3>
+        <div>
+          <span class="kpi">Total: <strong id="kpi-total">0</strong></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>ID Primavera</th>
+                <th>Usuário</th>
+                <th>Entregável</th>
+                <th>CAPEX Atual</th>
+                <th>CAPEX Sim</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="/simulador.js"></script>
+  </body>
+</html>

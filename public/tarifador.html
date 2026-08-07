@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tarifador</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <h1 class="title">Tarifador</h1>
+        <p class="subtitle">
+          Área inicial preparada para evolução das regras do Tarifador. Nesta fase: simulação local simples para validar interface e fluxo.
+        </p>
+        <div class="actions">
+          <a href="/"><button class="btn btn-secondary">Voltar para Início</button></a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Simulação Inicial</h3>
+        <form id="tarifador-form" class="form-grid">
+          <div>
+            <label for="custoBase">Custo Base</label>
+            <input id="custoBase" type="number" step="0.01" required />
+          </div>
+          <div>
+            <label for="margem">Margem (%)</label>
+            <input id="margem" type="number" step="0.01" required />
+          </div>
+          <div>
+            <label for="fatorRisco">Fator de Risco</label>
+            <input id="fatorRisco" type="number" step="0.01" value="1" required />
+          </div>
+          <div class="actions" style="grid-column:1/-1;">
+            <button class="btn btn-primary" type="submit">Calcular Tarifa</button>
+          </div>
+        </form>
+        <div id="tarifa-resultado" class="msg"></div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('tarifador-form');
+      const output = document.getElementById('tarifa-resultado');
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const custoBase = Number(document.getElementById('custoBase').value || 0);
+        const margem = Number(document.getElementById('margem').value || 0);
+        const fatorRisco = Number(document.getElementById('fatorRisco').value || 1);
+
+        const tarifa = custoBase * (1 + margem / 100) * fatorRisco;
+        output.className = 'msg ok';
+        output.textContent = `Tarifa simulada: R$ ${tarifa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      });
+    </script>
+  </body>
+</html>

@@ -1,4 +1,7 @@
 import path from "path";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const port = Number(process.env.PORT ?? 3000);
 const reportTtlSeconds = Number(process.env.REPORT_TTL_SECONDS ?? 60);
