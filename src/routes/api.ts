@@ -5,6 +5,7 @@ import { importarDadosDeArquivoExcel } from "../services/excelImportService";
 import { gerarGraficoBase64 } from "../services/chartService";
 import { gerarRelatorioPdfTemporario, getRelatorioPdf } from "../services/reportService";
 import {
+  buscarRegistroSimuladorPorId,
   atualizarRegistroSimulador,
   criarRegistroSimulador,
   excluirRegistroSimulador,
@@ -16,13 +17,25 @@ import {
 const upload = multer({ storage: multer.memoryStorage() });
 export const apiRouter = express.Router();
 
+type PerfilAcesso = "adm" | "usuario";
+
+function getAuthContext(req: Request): { usuario: string; perfil: PerfilAcesso } {
+  const usuarioHeader = String(req.headers["x-user-id"] ?? "").trim();
+  const perfilHeader = String(req.headers["x-user-role"] ?? "").trim().toLowerCase();
+
+  return {
+    usuario: usuarioHeader || "usuario_demo",
+    perfil: perfilHeader === "adm" ? "adm" : "usuario"
+  };
+}
+
 apiRouter.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ ok: true });
 });
 
 const registroSchema = z.object({
   idPrimavera: z.string().optional(),
-  usuario: z.string().min(1),
+  usuario: z.string().optional(),
   dataSimulacao: z.string().optional(),
   entregavel: z.string().optional(),
   capexEstimadoAtual: z.number().optional(),
@@ -33,9 +46,10 @@ const registroSchema = z.object({
   contexto: z.string().optional()
 });
 
-apiRouter.get("/simulador/registros", async (_req: Request, res: Response) => {
+apiRouter.get("/simulador/registros", async (req: Request, res: Response) => {
   try {
-    const registros = await listarRegistrosSimulador();
+    const auth = getAuthContext(req);
+    const registros = await listarRegistrosSimulador(auth.perfil === "adm" ? undefined : { usuario: auth.usuario });
     return res.status(200).json({ total: registros.length, registros });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado";
@@ -45,8 +59,13 @@ apiRouter.get("/simulador/registros", async (_req: Request, res: Response) => {
 
 apiRouter.post("/simulador/registros", async (req: Request, res: Response) => {
   try {
+    const auth = getAuthContext(req);
     const payload = registroSchema.parse(req.body ?? {});
-    const created = await criarRegistroSimulador(payload);
+    const created = await criarRegistroSimulador({
+      ...payload,
+      usuario: auth.perfil === "adm" ? (payload.usuario ?? auth.usuario) : auth.usuario
+    });
+
     return res.status(201).json(created);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado";
@@ -56,13 +75,27 @@ apiRouter.post("/simulador/registros", async (req: Request, res: Response) => {
 
 apiRouter.put("/simulador/registros/:id", async (req: Request, res: Response) => {
   try {
+    const auth = getAuthContext(req);
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "ID invalido." });
     }
 
+    const existing = await buscarRegistroSimuladorPorId(id);
+    if (!existing) {
+      return res.status(404).json({ error: "Registro nao encontrado." });
+    }
+
+    if (auth.perfil !== "adm" && existing.usuario !== auth.usuario) {
+      return res.status(403).json({ error: "Acesso negado para alterar registro de outro usuario." });
+    }
+
     const payload = registroSchema.parse(req.body ?? {});
-    const updated = await atualizarRegistroSimulador(id, payload);
+    const updated = await atualizarRegistroSimulador(id, {
+      ...payload,
+      usuario: auth.perfil === "adm" ? (payload.usuario ?? existing.usuario) : auth.usuario
+    });
+
     if (!updated) {
       return res.status(404).json({ error: "Registro nao encontrado." });
     }
@@ -75,9 +108,19 @@ apiRouter.put("/simulador/registros/:id", async (req: Request, res: Response) =>
 });
 
 apiRouter.delete("/simulador/registros/:id", async (req: Request, res: Response) => {
+  const auth = getAuthContext(req);
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: "ID invalido." });
+  }
+
+  const existing = await buscarRegistroSimuladorPorId(id);
+  if (!existing) {
+    return res.status(404).json({ error: "Registro nao encontrado." });
+  }
+
+  if (auth.perfil !== "adm" && existing.usuario !== auth.usuario) {
+    return res.status(403).json({ error: "Acesso negado para excluir registro de outro usuario." });
   }
 
   const deleted = await excluirRegistroSimulador(id);
@@ -102,16 +145,13 @@ apiRouter.get("/simulador/template", async (_req: Request, res: Response) => {
 
 apiRouter.post("/importar-dados", upload.single("arquivo"), async (req: Request, res: Response) => {
   try {
-    const usuario = String(req.body.usuario ?? "").trim();
-    if (!usuario) {
-      return res.status(400).json({ error: "Campo usuario e obrigatorio." });
-    }
+    const auth = getAuthContext(req);
 
     if (!req.file?.buffer) {
       return res.status(400).json({ error: "Arquivo Excel e obrigatorio no campo arquivo." });
     }
 
-    const registros = await importarDadosDeArquivoExcel(req.file.buffer, usuario);
+    const registros = await importarDadosDeArquivoExcel(req.file.buffer, auth.usuario);
     return res.status(200).json({
       total: registros.length,
       amostra: registros.slice(0, 20)
@@ -124,16 +164,13 @@ apiRouter.post("/importar-dados", upload.single("arquivo"), async (req: Request,
 
 apiRouter.post("/simulador/upload", upload.single("arquivo"), async (req: Request, res: Response) => {
   try {
-    const usuario = String(req.body.usuario ?? "").trim();
-    if (!usuario) {
-      return res.status(400).json({ error: "Campo usuario e obrigatorio." });
-    }
+    const auth = getAuthContext(req);
 
     if (!req.file?.buffer) {
       return res.status(400).json({ error: "Arquivo Excel e obrigatorio no campo arquivo." });
     }
 
-    const resultado = await importarExcelParaSimulador(req.file.buffer, usuario);
+    const resultado = await importarExcelParaSimulador(req.file.buffer, auth.usuario);
     return res.status(200).json({
       totalImportado: resultado.total
     });

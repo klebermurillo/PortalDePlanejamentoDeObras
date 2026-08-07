@@ -10,6 +10,18 @@ const gerarPdfBtn = document.getElementById("gerar-pdf");
 let registros = [];
 let editandoId = null;
 
+const authContext = {
+  userId: localStorage.getItem("portal-user-id") || "usuario_demo",
+  role: localStorage.getItem("portal-user-role") || "usuario"
+};
+
+function getAuthHeaders() {
+  return {
+    "x-user-id": authContext.userId,
+    "x-user-role": authContext.role
+  };
+}
+
 function exibirMensagem(el, texto, tipo) {
   el.className = `msg ${tipo}`;
   el.textContent = texto;
@@ -23,7 +35,6 @@ function limparMensagem(el) {
 function payloadFromForm() {
   const data = new FormData(form);
   return {
-    usuario: String(data.get("usuario") || "").trim(),
     dataSimulacao: String(data.get("dataSimulacao") || "").trim() || undefined,
     entregavel: String(data.get("entregavel") || "").trim() || undefined,
     capexEstimadoAtual: data.get("capexEstimadoAtual") ? Number(data.get("capexEstimadoAtual")) : undefined,
@@ -36,7 +47,6 @@ function payloadFromForm() {
 }
 
 function preencherForm(registro) {
-  form.usuario.value = registro.usuario || "";
   form.dataSimulacao.value = registro.dataSimulacao || "";
   form.entregavel.value = registro.entregavel || "";
   form.capexEstimadoAtual.value = registro.capexEstimadoAtual ?? "";
@@ -75,7 +85,9 @@ function renderTabela() {
 }
 
 async function carregarRegistros() {
-  const response = await fetch("/api/simulador/registros");
+  const response = await fetch("/api/simulador/registros", {
+    headers: getAuthHeaders()
+  });
   const data = await response.json();
   registros = data.registros || [];
   renderTabela();
@@ -90,7 +102,7 @@ form.addEventListener("submit", async (event) => {
 
     const response = await fetch(editandoId ? `/api/simulador/registros/${editandoId}` : "/api/simulador/registros", {
       method: editandoId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify(payload)
     });
 
@@ -142,7 +154,10 @@ tabelaBody.addEventListener("click", async (event) => {
       return;
     }
 
-    const response = await fetch(`/api/simulador/registros/${id}`, { method: "DELETE" });
+    const response = await fetch(`/api/simulador/registros/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders()
+    });
     if (!response.ok) {
       exibirMensagem(formMsg, "Falha ao excluir registro.", "error");
       return;
@@ -161,6 +176,7 @@ uploadForm.addEventListener("submit", async (event) => {
     const formData = new FormData(uploadForm);
     const response = await fetch("/api/simulador/upload", {
       method: "POST",
+      headers: getAuthHeaders(),
       body: formData
     });
 

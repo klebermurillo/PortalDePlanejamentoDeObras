@@ -16,7 +16,7 @@
     <main class="shell">
       <section class="hero">
         <h1 class="title">Simulador de Cenários</h1>
-        <p class="subtitle">Fluxo local sem Microsoft: cadastro manual, atualização, exclusão, importação por planilha e PDF.</p>
+        <p class="subtitle">Fluxo local sem Microsoft: cadastro manual, atualização, exclusão, importação por planilha e PDF. O usuário é definido pelo contexto de acesso.</p>
         <div class="actions">
           <a href="/"><button class="btn btn-secondary">Voltar para Início</button></a>
           <a href="/api/simulador/template"><button class="btn btn-primary">Baixar Modelo Excel</button></a>
@@ -27,10 +27,6 @@
         <h3>Novo Registro</h3>
         <form id="registro-form">
           <div class="form-grid">
-            <div>
-              <label for="usuario">Usuário</label>
-              <input id="usuario" name="usuario" required />
-            </div>
             <div>
               <label for="dataSimulacao">Data Simulação</label>
               <input id="dataSimulacao" name="dataSimulacao" type="date" />
@@ -77,10 +73,6 @@
         <h3>Importação em Massa</h3>
         <form id="upload-form">
           <div class="form-grid">
-            <div>
-              <label for="uploadUsuario">Usuário responsável</label>
-              <input id="uploadUsuario" name="usuario" required />
-            </div>
             <div>
               <label for="arquivoExcel">Arquivo Excel</label>
               <input id="arquivoExcel" name="arquivo" type="file" accept=".xlsx" required />

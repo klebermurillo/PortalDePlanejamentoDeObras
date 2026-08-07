@@ -47,6 +47,16 @@ Com o servidor rodando, abra:
 - Banco SQLite local: `data/portal.db`
 - Fluxo sem dependencias Microsoft nesta fase inicial
 
+### Perfilamento (base para proxima fase)
+
+- O prototipo ja considera dois perfis por contexto de requisicao:
+	- `adm`: visualiza e gerencia simulacoes de todos os usuarios
+	- `usuario`: visualiza e gerencia apenas as proprias simulacoes
+- No prototipo web atual, esse contexto e enviado por headers:
+	- `x-user-id`
+	- `x-user-role` (`adm` ou `usuario`)
+- Em producao, esses valores serao substituidos pela autenticacao real do portal.
+
 ### Guia de migracao
 
 Veja o mapeamento completo dos flows para o portal em `docs/migracao-powerapps-portal.md`.
