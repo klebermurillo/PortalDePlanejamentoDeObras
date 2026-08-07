@@ -34,6 +34,19 @@ cp .env.example .env
 npm run dev
 ```
 
+### Acessar o site
+
+Com o servidor rodando, abra:
+
+- Home do portal: `http://localhost:3000/`
+- Simulador de cenarios: `http://localhost:3000/simulador.html`
+- Tarifador: `http://localhost:3000/tarifador.html`
+
+### Persistencia local
+
+- Banco SQLite local: `data/portal.db`
+- Fluxo sem dependencias Microsoft nesta fase inicial
+
 ### Guia de migracao
 
 Veja o mapeamento completo dos flows para o portal em `docs/migracao-powerapps-portal.md`.
