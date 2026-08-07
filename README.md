@@ -48,6 +48,7 @@ Com o servidor rodando, abra:
 - Curva S em SVG gerada localmente no navegador
 - Indicadores de aderencia atual e simulada
 - Painel de parametros para simular custo, prazo, risco, outorga e multa
+- Resumo consolidado do cenario com leitura executiva
 - Area operacional abaixo com cadastro manual, importacao Excel e tabela de registros
 
 ### Persistencia local

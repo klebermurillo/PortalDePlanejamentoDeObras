@@ -8,7 +8,6 @@ const uploadMsg = document.getElementById("upload-msg");
 const cancelarBtn = document.getElementById("cancelar-edicao");
 const gerarPdfBtn = document.getElementById("gerar-pdf");
 const curvaChart = document.getElementById("curva-s-chart");
-const insightText = document.getElementById("insight-text");
 
 const horasExtrasToggle = document.getElementById("horasExtrasToggle");
 const resumoEquipes = document.getElementById("resumo-equipes");
@@ -236,11 +235,6 @@ function updateDashboard() {
   resumoMulta.textContent = formatPercent(scenario.params.multaPercentual);
   resumoRisco.textContent = scenario.params.riscoOperacional.charAt(0).toUpperCase() + scenario.params.riscoOperacional.slice(1);
   resumoTotal.textContent = formatMillions(scenario.scenarioCost);
-
-  const prazoDiff = scenario.params.prazoDias - scenario.novoPrazo;
-  const economiaTexto = scenario.economia >= 0 ? `economiza ${formatMillions(scenario.economia)}` : `eleva o custo em ${formatMillions(Math.abs(scenario.economia))}`;
-  const riscoTexto = scenario.params.riscoOperacional === "alto" ? "exige mitigação contratual reforçada" : "mantém risco administrável";
-  insightText.innerHTML = `Ao ajustar para <strong>${scenario.params.numeroEquipes} equipes</strong> e <strong>${scenario.params.horasExtras ? "manter" : "reduzir"}</strong> horas extras, o projeto ${economiaTexto}, ${prazoDiff >= 0 ? `reduz o prazo em <strong>${prazoDiff} dias</strong>` : `acrescenta <strong>${Math.abs(prazoDiff)} dias</strong> ao prazo`} e ${riscoTexto}.`;
 
   renderCurvaS(series);
 }
