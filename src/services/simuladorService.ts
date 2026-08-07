@@ -21,7 +21,7 @@ export type SimuladorRegistro = {
 
 export type NovoRegistroInput = {
   idPrimavera?: string;
-  usuario: string;
+  usuario?: string;
   dataSimulacao?: string;
   entregavel?: string;
   capexEstimadoAtual?: number;
@@ -30,6 +30,10 @@ export type NovoRegistroInput = {
   anoRealSim?: string;
   pontoAtencao?: string;
   contexto?: string;
+};
+
+type ListarRegistrosFiltro = {
+  usuario?: string;
 };
 
 type DbRegistro = {
@@ -66,15 +70,25 @@ function mapDbRegistro(registro: DbRegistro): SimuladorRegistro {
   };
 }
 
-export async function listarRegistrosSimulador(): Promise<SimuladorRegistro[]> {
+export async function listarRegistrosSimulador(filtro?: ListarRegistrosFiltro): Promise<SimuladorRegistro[]> {
   const db = await getDb();
-  const rows = await db.all<DbRegistro[]>("SELECT * FROM simulador_registros ORDER BY id DESC");
+  const rows = filtro?.usuario
+    ? await db.all<DbRegistro[]>("SELECT * FROM simulador_registros WHERE usuario = ? ORDER BY id DESC", filtro.usuario)
+    : await db.all<DbRegistro[]>("SELECT * FROM simulador_registros ORDER BY id DESC");
+
   return rows.map(mapDbRegistro);
+}
+
+export async function buscarRegistroSimuladorPorId(id: number): Promise<SimuladorRegistro | null> {
+  const db = await getDb();
+  const row = await db.get<DbRegistro>("SELECT * FROM simulador_registros WHERE id = ?", id);
+  return row ? mapDbRegistro(row) : null;
 }
 
 export async function criarRegistroSimulador(input: NovoRegistroInput): Promise<SimuladorRegistro> {
   const db = await getDb();
   const idPrimaveraInterno = (input.idPrimavera ?? "").trim() || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
+  const usuarioInterno = (input.usuario ?? "").trim() || "usuario_demo";
   const result = await db.run(
     `
     INSERT INTO simulador_registros (
@@ -92,7 +106,7 @@ export async function criarRegistroSimulador(input: NovoRegistroInput): Promise<
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     `,
     idPrimaveraInterno,
-    input.usuario,
+    usuarioInterno,
     input.dataSimulacao ?? null,
     input.entregavel ?? null,
     input.capexEstimadoAtual ?? null,
@@ -119,6 +133,7 @@ export async function atualizarRegistroSimulador(id: number, input: NovoRegistro
   }
 
   const idPrimaveraInterno = (input.idPrimavera ?? "").trim() || existing.id_primavera || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
+  const usuarioInterno = (input.usuario ?? "").trim() || existing.usuario || "usuario_demo";
 
   await db.run(
     `
@@ -137,7 +152,7 @@ export async function atualizarRegistroSimulador(id: number, input: NovoRegistro
     WHERE id = ?
     `,
     idPrimaveraInterno,
-    input.usuario,
+    usuarioInterno,
     input.dataSimulacao ?? null,
     input.entregavel ?? null,
     input.capexEstimadoAtual ?? null,
@@ -223,7 +238,7 @@ export async function gerarTemplateSimuladorExcel(): Promise<Buffer> {
   ];
 
   worksheet.addRow({
-    dataSimulacao: "07/08/2026",
+    dataSimulacao: new Date(2026, 7, 7),
     entregavel: "Ampliação de patio",
     capexAtual: 15000000,
     capexSim: 16200000,
@@ -235,6 +250,7 @@ export async function gerarTemplateSimuladorExcel(): Promise<Buffer> {
 
   const headerRow = worksheet.getRow(1);
   headerRow.font = { bold: true };
+  worksheet.getColumn("dataSimulacao").numFmt = "dd/mm/yyyy";
 
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer);
