@@ -18,6 +18,8 @@ const workspaceState = {
   percentual: 35
 };
 
+const ADERENCIA_REFERENCE_YEAR = 2028;
+
 // ── Formatação ────────────────────────────────────────────────────────────────
 function fmtCapex(v) {
   if (!v) return "—";
@@ -299,7 +301,7 @@ function renderSimulacoes() {
   });
 }
 
-function distribuirCapexAnual(total, anoInicio, anoFim) {
+function distribuirCapexAnual(total, anoInicio, anoFim, profile = "balanced") {
   if (!Number.isFinite(total) || total <= 0) return new Map();
 
   const start = Math.min(anoInicio, anoFim);
@@ -309,6 +311,15 @@ function distribuirCapexAnual(total, anoInicio, anoFim) {
 
   const pesos = anos.map((_, index) => {
     const t = anos.length === 1 ? 1 : index / (anos.length - 1);
+
+    if (profile === "front") {
+      return (1.75 - t) ** 2 + 0.18;
+    }
+
+    if (profile === "back") {
+      return (0.75 + t) ** 2 + 0.12;
+    }
+
     return Math.sin(Math.PI * t) + 0.25;
   });
   const totalPeso = pesos.reduce((sum, value) => sum + value, 0);
@@ -355,11 +366,11 @@ function valueAtYear(anos, series, year) {
   return series[index] ?? 0;
 }
 
-function calcularAderencia(anos, serieReal, serieContrato, anoContrato) {
-  const real = valueAtYear(anos, serieReal, anoContrato);
-  const contrato = valueAtYear(anos, serieContrato, anoContrato);
+function calcularAderencia(anos, serieReal, serieContrato, anoReferencia) {
+  const real = valueAtYear(anos, serieReal, anoReferencia);
+  const contrato = valueAtYear(anos, serieContrato, anoReferencia);
   if (!contrato) return 0;
-  return (real / contrato) * 100;
+  return clamp((real / contrato) * 100, 0, 100);
 }
 
 function buildCurvePath(points, width, height, padding) {
@@ -385,7 +396,7 @@ function buildCurvePath(points, width, height, padding) {
   return points.map((point, index) => `${index === 0 ? "M" : "L"}${toX(point.x).toFixed(2)} ${toY(point.y).toFixed(2)}`).join(" ");
 }
 
-function renderCurvaSvg(svgId, anos, series, yLegend) {
+function renderCurvaSvg(svgId, anos, series, yLegend, options = {}) {
   const svg = document.getElementById(svgId);
   if (!svg) return;
 
@@ -425,12 +436,32 @@ function renderCurvaSvg(svgId, anos, series, yLegend) {
     return `<path d="${buildCurvePath(points, width, height, padding)}" stroke="${serie.color}" stroke-width="3" fill="none" ${serie.dash ? `stroke-dasharray="${serie.dash}"` : ""} />`;
   }).join("");
 
+  const pointLabels = options.showPointLabels
+    ? series.map((serie) => {
+        return anos.map((ano, index) => {
+          const value = serie.values[index];
+          if (!Number.isFinite(value)) return "";
+
+          const ratioX = anos.length <= 1 ? 0 : index / (anos.length - 1);
+          const x = padding.left + (ratioX * chartW);
+          const y = height - padding.bottom - ((value / maxY) * chartH);
+          return `
+            <g>
+              <circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="2.8" fill="${serie.color}" />
+              <text x="${x.toFixed(2)}" y="${(y - 8).toFixed(2)}" fill="${serie.color}" font-size="9" text-anchor="middle">${value.toFixed(0)}%</text>
+            </g>
+          `;
+        }).join("");
+      }).join("")
+    : "";
+
   const legends = series.map((serie, index) => `<text x="${padding.left + (index * 108)}" y="12" fill="${serie.color}" font-size="10">${serie.label}</text>`).join("");
 
   svg.innerHTML = `
     <rect x="0" y="0" width="${width}" height="${height}" fill="transparent" />
     ${gridLines}
     ${paths}
+    ${pointLabels}
     ${legends}
     ${xLabels}
     ${yLabels}
@@ -606,19 +637,19 @@ function aplicarCenarioSimulacao() {
   const simInicio = Math.min(anoContratualSim, anoRealSim) - 3;
   const simFim = Math.max(anoContratualSim, anoRealSim);
 
-  const contractCurrentMap = distribuirCapexAnual(capexTotal, baseInicio, anoContratualBase);
-  const realCurrentMap = distribuirCapexAnual(capexTotal, baseInicio, anoRealBase);
+  const contractCurrentMap = distribuirCapexAnual(capexTotal, baseInicio, anoContratualBase, "front");
+  const realCurrentMap = distribuirCapexAnual(capexTotal, baseInicio, anoRealBase, "back");
   const contractSimMap = mergeDistribuicoes(
-    distribuirCapexAnual(capexNaoImpactado, baseInicio, anoContratualBase),
-    distribuirCapexAnual(capexImpactado, simInicio, anoContratualSim)
+    distribuirCapexAnual(capexNaoImpactado, baseInicio, anoContratualBase, "front"),
+    distribuirCapexAnual(capexImpactado, simInicio, anoContratualSim, "front")
   );
   const realSimMap = mergeDistribuicoes(
-    distribuirCapexAnual(capexNaoImpactado, baseInicio, anoRealBase),
-    distribuirCapexAnual(capexImpactado, simInicio, anoRealSim)
+    distribuirCapexAnual(capexNaoImpactado, baseInicio, anoRealBase, "back"),
+    distribuirCapexAnual(capexImpactado, simInicio, anoRealSim, "back")
   );
 
-  const minAno = Math.min(baseInicio, simInicio) - 1;
-  const maxAno = Math.max(anoContratualBase, anoRealBase, anoContratualSim, anoRealSim) + 2;
+  const minAno = Math.min(2021, baseInicio, simInicio);
+  const maxAno = Math.max(2032, anoContratualBase, anoRealBase, anoContratualSim, anoRealSim);
   const anos = rangeAnos(minAno, maxAno);
 
   const contractCurrent = cumulativeSeries(anos, contractCurrentMap);
@@ -641,15 +672,17 @@ function aplicarCenarioSimulacao() {
   ];
 
   renderCurvaSvg("sim-curva-capex", anos, capexSeries, (v) => `${v.toFixed(1)} mi`);
-  renderCurvaSvg("sim-curva-percentual", anos, percentualSeries, (v) => `${v.toFixed(0)}%`);
+  renderCurvaSvg("sim-curva-percentual", anos, percentualSeries, (v) => `${v.toFixed(0)}%`, { showPointLabels: true });
 
   const deltaPrazo = anoRealocacao - anoBase;
   document.getElementById("kpi-capex-base").textContent = fmtMi(capexTotal);
   document.getElementById("kpi-capex-sim").textContent = fmtMi(capexNaoImpactado + capexImpactado);
   document.getElementById("kpi-delta-prazo").textContent = `${deltaPrazo >= 0 ? "+" : ""}${deltaPrazo} ano(s)`;
   document.getElementById("kpi-percentual").textContent = fmtPercent(percentual);
-  document.getElementById("kpi-aderencia-atual").textContent = fmtPercent(calcularAderencia(anos, realCurrent, contractCurrent, anoContratualBase));
-  document.getElementById("kpi-aderencia-sim").textContent = fmtPercent(calcularAderencia(anos, realSim, contractSim, anoContratualSim));
+  const anoReferenciaAtual = Math.min(ADERENCIA_REFERENCE_YEAR, anoContratualBase);
+  const anoReferenciaSim = Math.min(ADERENCIA_REFERENCE_YEAR, anoContratualSim);
+  document.getElementById("kpi-aderencia-atual").textContent = fmtPercent(calcularAderencia(anos, realCurrent, contractCurrent, anoReferenciaAtual));
+  document.getElementById("kpi-aderencia-sim").textContent = fmtPercent(calcularAderencia(anos, realSim, contractSim, anoReferenciaSim));
 
   const impacto = calcularOutorgaEMulta({
     capexImpactado,
