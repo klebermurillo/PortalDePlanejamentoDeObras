@@ -396,13 +396,46 @@ function buildCurvePath(points, width, height, padding) {
   return points.map((point, index) => `${index === 0 ? "M" : "L"}${toX(point.x).toFixed(2)} ${toY(point.y).toFixed(2)}`).join(" ");
 }
 
+function getNiceAxisMax(value) {
+  if (!Number.isFinite(value) || value <= 0) return 1;
+
+  const exponent = Math.floor(Math.log10(value));
+  const magnitude = 10 ** exponent;
+  const normalized = value / magnitude;
+  const steps = [1, 1.25, 1.5, 2, 2.5, 5, 10];
+  const step = steps.find((candidate) => candidate >= normalized) ?? 10;
+
+  return step * magnitude;
+}
+
+function getSmartLabelIndexes(values) {
+  if (!Array.isArray(values) || values.length === 0) return [];
+
+  const indexes = new Set([0, values.length - 1]);
+  for (let index = 1; index < values.length; index += 1) {
+    const current = values[index];
+    const previous = values[index - 1];
+
+    if (!Number.isFinite(current) || !Number.isFinite(previous)) continue;
+    if (current <= 0 && previous <= 0) continue;
+
+    const delta = Math.abs(current - previous);
+    const relativeJump = previous === 0 ? 1 : delta / Math.max(previous, 1);
+    if (delta >= 8 || relativeJump >= 0.2 || (previous === 0 && current > 0)) {
+      indexes.add(index);
+    }
+  }
+
+  return Array.from(indexes).sort((a, b) => a - b);
+}
+
 function renderCurvaSvg(svgId, anos, series, yLegend, options = {}) {
   const svg = document.getElementById(svgId);
   if (!svg) return;
 
   const width = 760;
   const height = 260;
-  const padding = { top: 18, right: 14, bottom: 30, left: 42 };
+  const padding = { top: 22, right: 14, bottom: 30, left: 52 };
 
   if (!anos.length) {
     svg.innerHTML = "";
@@ -410,59 +443,82 @@ function renderCurvaSvg(svgId, anos, series, yLegend, options = {}) {
   }
 
   const allValues = series.flatMap((item) => item.values);
-  const maxY = Math.max(...allValues, 1);
+  const valueMax = Math.max(...allValues, 1);
+  const maxY = Number.isFinite(options.maxY) && options.maxY > 0
+    ? options.maxY
+    : getNiceAxisMax(valueMax * 1.08);
+  const tickCount = Math.max(3, Number(options.tickCount) || 5);
   const chartH = height - padding.top - padding.bottom;
   const chartW = width - padding.left - padding.right;
 
-  const yTicks = Array.from({ length: 5 }, (_, idx) => idx / 4).map((fraction) => maxY * fraction);
+  const yTicks = Array.from({ length: tickCount }, (_, idx) => idx / (tickCount - 1)).map((fraction) => maxY * fraction);
   const gridLines = yTicks.map((tick) => {
     const y = (height - padding.bottom - ((tick / maxY) * chartH)).toFixed(2);
-    return `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="rgba(139,163,187,0.23)" stroke-width="1" />`;
+    return `<line class="sim-chart-grid-y" x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" />`;
+  }).join("");
+
+  const xTickStep = Math.max(1, Number(options.xLabelStep) || Math.ceil(anos.length / 8));
+  const verticalGrid = anos.map((_, idx) => {
+    if (idx % xTickStep !== 0 && idx !== anos.length - 1) return "";
+    const x = padding.left + ((anos.length <= 1 ? 0 : idx / (anos.length - 1)) * chartW);
+    return `<line class="sim-chart-grid-x" x1="${x.toFixed(2)}" y1="${padding.top}" x2="${x.toFixed(2)}" y2="${height - padding.bottom}" />`;
   }).join("");
 
   const xLabels = anos.map((ano, idx) => {
-    if (idx % 2 !== 0 && idx !== anos.length - 1) return "";
+    if (idx % xTickStep !== 0 && idx !== anos.length - 1) return "";
     const x = padding.left + ((anos.length <= 1 ? 0 : idx / (anos.length - 1)) * chartW);
-    return `<text x="${x.toFixed(2)}" y="${height - 10}" fill="var(--sim-muted)" font-size="10" text-anchor="middle">${ano}</text>`;
+    return `<text class="sim-chart-x-label" x="${x.toFixed(2)}" y="${height - 10}" text-anchor="middle">${ano}</text>`;
   }).join("");
 
   const yLabels = yTicks.map((tick) => {
     const y = height - padding.bottom - ((tick / maxY) * chartH);
-    return `<text x="8" y="${(y + 3).toFixed(2)}" fill="var(--sim-muted)" font-size="10">${yLegend(tick)}</text>`;
+    return `<text class="sim-chart-y-label" x="8" y="${(y + 3).toFixed(2)}">${yLegend(tick)}</text>`;
   }).join("");
 
   const paths = series.map((serie) => {
     const points = anos.map((ano, index) => ({ x: ano, y: serie.values[index] }));
-    return `<path d="${buildCurvePath(points, width, height, padding)}" stroke="${serie.color}" stroke-width="3" fill="none" ${serie.dash ? `stroke-dasharray="${serie.dash}"` : ""} />`;
+    return `<path class="sim-chart-line" d="${buildCurvePath(points, width, height, padding)}" stroke="${serie.color}" stroke-width="3" ${serie.dash ? `stroke-dasharray="${serie.dash}"` : ""} />`;
   }).join("");
 
   const pointLabels = options.showPointLabels
-    ? series.map((serie) => {
-        return anos.map((ano, index) => {
+    ? series.map((serie, serieIndex) => {
+        const labelIndexes = options.smartPointLabels === false
+          ? anos.map((_, index) => index)
+          : getSmartLabelIndexes(serie.values);
+
+        return labelIndexes.map((index) => {
+          const ano = anos[index];
           const value = serie.values[index];
           if (!Number.isFinite(value)) return "";
+          if (value <= 0 && index !== 0) return "";
 
           const ratioX = anos.length <= 1 ? 0 : index / (anos.length - 1);
           const x = padding.left + (ratioX * chartW);
           const y = height - padding.bottom - ((value / maxY) * chartH);
+          const prefersAbove = serieIndex % 2 === 0;
+          const labelY = y < padding.top + 16
+            ? y + 14
+            : y + (prefersAbove ? -10 : 14);
+          const labelText = options.pointLabelFormatter
+            ? options.pointLabelFormatter(value, ano, serie)
+            : `${value.toFixed(0)}%`;
+
           return `
             <g>
-              <circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="2.8" fill="${serie.color}" />
-              <text x="${x.toFixed(2)}" y="${(y - 8).toFixed(2)}" fill="${serie.color}" font-size="9" text-anchor="middle">${value.toFixed(0)}%</text>
+              <circle class="sim-chart-point" cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="3" fill="${serie.color}" />
+              <text class="sim-chart-label" x="${x.toFixed(2)}" y="${labelY.toFixed(2)}" fill="${serie.color}" text-anchor="middle">${labelText}</text>
             </g>
           `;
         }).join("");
       }).join("")
     : "";
 
-  const legends = series.map((serie, index) => `<text x="${padding.left + (index * 108)}" y="12" fill="${serie.color}" font-size="10">${serie.label}</text>`).join("");
-
   svg.innerHTML = `
     <rect x="0" y="0" width="${width}" height="${height}" fill="transparent" />
     ${gridLines}
+    ${verticalGrid}
     ${paths}
     ${pointLabels}
-    ${legends}
     ${xLabels}
     ${yLabels}
   `;
@@ -671,8 +727,18 @@ function aplicarCenarioSimulacao() {
     { label: "Real/Tend Sim", color: "#facc15", values: realSim.map((v) => capexTotal > 0 ? (v / capexTotal) * 100 : 0), dash: "10 6" }
   ];
 
-  renderCurvaSvg("sim-curva-capex", anos, capexSeries, (v) => `${v.toFixed(1)} mi`);
-  renderCurvaSvg("sim-curva-percentual", anos, percentualSeries, (v) => `${v.toFixed(0)}%`, { showPointLabels: true });
+  renderCurvaSvg("sim-curva-capex", anos, capexSeries, (v) => `${v.toFixed(1)} mi`, {
+    tickCount: 5,
+    xLabelStep: 2
+  });
+  renderCurvaSvg("sim-curva-percentual", anos, percentualSeries, (v) => `${v.toFixed(0)}%`, {
+    showPointLabels: true,
+    smartPointLabels: true,
+    pointLabelFormatter: (value) => `${Math.round(value)}%`,
+    maxY: 100,
+    tickCount: 5,
+    xLabelStep: 2
+  });
 
   const deltaPrazo = anoRealocacao - anoBase;
   document.getElementById("kpi-capex-base").textContent = fmtMi(capexTotal);

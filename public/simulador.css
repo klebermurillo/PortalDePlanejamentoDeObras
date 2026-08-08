@@ -33,6 +33,10 @@ body {
   font-size: 14px;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* ── Header ────────────────────────────────────────────────────────────────── */
 .sim-header {
   display: flex;
@@ -86,10 +90,52 @@ body {
 }
 
 .sim-figma-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  display: grid;
+  gap: 9px;
+  min-width: 240px;
+}
+
+.sim-hero-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  border: 1px solid color-mix(in srgb, var(--sim-accent) 52%, #d0e6ff 48%);
+  border-radius: 999px;
+  padding: 8px 13px;
+  color: #e6f4ff;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background:
+    linear-gradient(120deg, rgba(14, 79, 135, 0.94), rgba(24, 109, 178, 0.78));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.sim-hero-nav-btn:hover {
+  transform: translateY(-1px);
+  border-color: #7cc1ff;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+.sim-hero-nav-btn-download {
+  background:
+    linear-gradient(120deg, rgba(15, 102, 96, 0.94), rgba(16, 138, 126, 0.78));
+  border-color: color-mix(in srgb, #10b981 62%, #cbfaeb 38%);
+}
+
+.sim-hero-nav-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  background: rgba(6, 34, 60, 0.54);
+  border: 1px solid rgba(191, 225, 255, 0.32);
 }
 
 .sim-figma-cards {
@@ -591,6 +637,10 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sim-surface2) 64%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sim-border) 70%, #9ac7f8 30%);
 }
 
 .sim-legend-dot {
@@ -634,7 +684,41 @@ body {
   height: auto;
   display: block;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--sim-bg) 54%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sim-border) 72%, #83b7ed 28%);
+  background:
+    linear-gradient(180deg, rgba(7, 30, 54, 0.74), rgba(8, 34, 60, 0.54));
+}
+
+.sim-curva-card svg .sim-chart-grid-y,
+.sim-curva-card svg .sim-chart-grid-x {
+  stroke: rgba(145, 176, 206, 0.24);
+  stroke-width: 1;
+}
+
+.sim-curva-card svg .sim-chart-grid-x {
+  stroke-dasharray: 4 6;
+}
+
+.sim-curva-card svg .sim-chart-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sim-curva-card svg .sim-chart-point {
+  stroke: rgba(6, 20, 40, 0.92);
+  stroke-width: 1.1;
+}
+
+.sim-curva-card svg .sim-chart-label {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.sim-curva-card svg .sim-chart-y-label,
+.sim-curva-card svg .sim-chart-x-label {
+  fill: var(--sim-muted);
+  font-size: 10px;
 }
 
 .sim-workspace-table {
@@ -792,7 +876,12 @@ body {
   }
 
   .sim-figma-actions {
-    align-items: flex-start;
+    min-width: 0;
+  }
+
+  .sim-hero-nav-btn {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .sim-figma-cards {
