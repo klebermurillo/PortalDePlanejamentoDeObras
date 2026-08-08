@@ -114,6 +114,92 @@
 
       <!-- Coluna direita: tabela de projetos da base -->
       <section class="sim-table-section">
+        <div class="sim-workspace">
+          <div class="sim-workspace-header">
+            <div>
+              <span class="panel-kicker">Simulação de Prazo</span>
+              <h3>Curva S e Impacto Financeiro</h3>
+            </div>
+            <a class="sim-link" href="/api/simulador/template" target="_blank" rel="noreferrer">Baixar template Excel</a>
+          </div>
+
+          <div class="sim-workspace-controls">
+            <div class="sim-workspace-field">
+              <label for="sim-work-obra">Obra</label>
+              <select id="sim-work-obra" class="sim-select">
+                <option value="">Selecione uma obra</option>
+              </select>
+            </div>
+            <div class="sim-workspace-field">
+              <label for="sim-work-ano">Ano de Realocação</label>
+              <input id="sim-work-ano" type="number" min="2021" max="2045" />
+            </div>
+            <div class="sim-workspace-field">
+              <label for="sim-work-tipo">Movimento</label>
+              <select id="sim-work-tipo" class="sim-select">
+                <option value="postergar">Postergar</option>
+                <option value="adiantar">Adiantar</option>
+              </select>
+            </div>
+            <div class="sim-workspace-field">
+              <label for="sim-work-percent">Percentual da Obra (%)</label>
+              <input id="sim-work-percent" type="range" min="0" max="100" value="35" />
+              <div class="sim-workspace-percent-row">
+                <span id="sim-work-percent-label">35%</span>
+                <button id="btn-aplicar-cenario" class="sim-btn sim-btn-salvar" type="button">Aplicar cenário</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sim-workspace-kpis">
+            <article class="sim-kpi-card">
+              <span>CAPEX Base</span>
+              <strong id="kpi-capex-base">—</strong>
+            </article>
+            <article class="sim-kpi-card">
+              <span>CAPEX Simulado</span>
+              <strong id="kpi-capex-sim">—</strong>
+            </article>
+            <article class="sim-kpi-card">
+              <span>Deslocamento de Prazo</span>
+              <strong id="kpi-delta-prazo">—</strong>
+            </article>
+            <article class="sim-kpi-card">
+              <span>Percentual Impactado</span>
+              <strong id="kpi-percentual">—</strong>
+            </article>
+          </div>
+
+          <div class="sim-curvas-grid">
+            <article class="sim-curva-card">
+              <h4>Curva S de CAPEX (R$ mi)</h4>
+              <svg id="sim-curva-capex" viewBox="0 0 760 260" role="img" aria-label="Curva S de CAPEX"></svg>
+            </article>
+            <article class="sim-curva-card">
+              <h4>Curva S Percentual (%)</h4>
+              <svg id="sim-curva-percentual" viewBox="0 0 760 260" role="img" aria-label="Curva S percentual"></svg>
+            </article>
+          </div>
+
+          <div class="sim-workspace-table">
+            <h4>Tabela de Multas e Outorgas</h4>
+            <div class="table-wrap">
+              <table class="sim-table sim-penalty-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Valor</th>
+                    <th>Observação</th>
+                  </tr>
+                </thead>
+                <tbody id="sim-penalty-tbody">
+                  <tr><td colspan="3" class="sim-empty-row">Selecione uma obra e aplique um cenário para visualizar os impactos.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div class="sim-table-header">
           <span class="sim-table-title">Base de Projetos</span>
           <span id="tabela-total" class="sim-table-count">0 projetos</span>

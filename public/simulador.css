@@ -361,6 +361,135 @@ body {
   text-decoration: underline;
 }
 
+/* ── Workspace de simulação ───────────────────────────────────────────────── */
+.sim-workspace {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--sim-border);
+  background: color-mix(in srgb, var(--sim-surface2) 68%, transparent);
+  display: grid;
+  gap: 12px;
+}
+
+.sim-workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sim-workspace-header h3 {
+  margin: 3px 0 0;
+  font-size: 1.06rem;
+}
+
+.sim-workspace-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sim-workspace-field label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--sim-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sim-workspace-field input,
+.sim-workspace-field select {
+  width: 100%;
+  background: var(--sim-surface);
+  border: 1px solid var(--sim-border);
+  border-radius: 6px;
+  color: var(--sim-ink);
+  padding: 7px 8px;
+  font: inherit;
+}
+
+.sim-workspace-percent-row {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sim-workspace-percent-row span {
+  color: var(--sim-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sim-workspace-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sim-kpi-card {
+  border: 1px solid var(--sim-border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--sim-surface);
+}
+
+.sim-kpi-card span {
+  display: block;
+  color: var(--sim-muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sim-kpi-card strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.02rem;
+}
+
+.sim-curvas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sim-curva-card {
+  border: 1px solid var(--sim-border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--sim-surface);
+}
+
+.sim-curva-card h4,
+.sim-workspace-table h4 {
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sim-muted);
+}
+
+.sim-curva-card svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sim-bg) 54%, transparent);
+}
+
+.sim-workspace-table {
+  border: 1px solid var(--sim-border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--sim-surface);
+}
+
+.sim-penalty-table {
+  min-width: 540px;
+}
+
 /* ── Tabela de projetos ────────────────────────────────────────────────────── */
 .sim-table-section {
   display: flex;
@@ -500,6 +629,12 @@ body {
     grid-template-columns: 1fr;
     height: auto;
     overflow: auto;
+  }
+
+  .sim-workspace-controls,
+  .sim-workspace-kpis,
+  .sim-curvas-grid {
+    grid-template-columns: 1fr;
   }
 
   .sim-header-filters {
