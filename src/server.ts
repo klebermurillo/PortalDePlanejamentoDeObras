@@ -7,7 +7,15 @@ import { apiRouter } from "./routes/api";
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        upgradeInsecureRequests: null
+      }
+    }
+  })
+);
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
 

@@ -629,8 +629,8 @@ document.getElementById("sim-form").addEventListener("submit", async (event) => 
     return;
   }
 
-  mostrarMsgForm(simId ? "Simulação atualizada." : "Simulação salva.", "ok");
   limparFormSim();
+  mostrarMsgForm(simId ? "Simulação atualizada." : "Simulação salva.", "ok");
   await carregarSimulacoes();
 });
 
@@ -680,8 +680,8 @@ document.getElementById("btn-apagar").addEventListener("click", async () => {
 
   const res = await fetch(`/api/simulacoes/${simId}`, { method: "DELETE", headers: authHeaders() });
   if (res.ok) {
-    mostrarMsgForm("Simulação excluída.", "ok");
     limparFormSim();
+    mostrarMsgForm("Simulação excluída.", "ok");
     await carregarSimulacoes();
   }
 });
