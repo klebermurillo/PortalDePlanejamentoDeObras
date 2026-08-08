@@ -13,32 +13,88 @@
     <div class="toolbar">
       <button id="theme-toggle" class="theme-toggle" type="button">Tema</button>
     </div>
-    <main class="shell">
-      <section class="hero">
-        <h1 class="title">Portal de Planejamento de Obras</h1>
-        <p class="subtitle">
-          Entrada única para os sistemas do time. Nesta primeira fase, tudo roda sem dependências Microsoft,
-          com cadastro local, importação por Excel e geração de relatório no próprio portal.
-        </p>
+    <main class="shell portal-home">
+      <section class="portal-hero">
+        <div class="portal-hero-copy">
+          <span class="portal-kicker">Portal Operacional</span>
+          <h1>Portal de Planejamento de Obras</h1>
+          <p>
+            Ambiente único para simulação, cadastro e cálculo técnico. Nesta fase,
+            o fluxo de massa é feito por upload de Excel com processamento direto no portal.
+          </p>
+          <div class="portal-hero-actions">
+            <a class="btn btn-primary" href="/simulador.html">Abrir Simulador</a>
+            <a class="btn btn-secondary" href="/tarifador.html">Abrir Tarifador</a>
+          </div>
+        </div>
       </section>
 
-      <section class="grid">
-        <article class="card">
-          <span class="badge">Sistema 1 ativo</span>
-          <h2>Simulador de Cenários</h2>
-          <p>Cadastro manual, edição, exclusão, upload em massa por Excel e geração de relatório em PDF.</p>
-          <div class="actions">
-            <a href="/simulador.html"><button class="btn btn-primary">Acessar Simulador</button></a>
+      <section class="portal-cards" aria-label="Acessos rápidos">
+        <article class="portal-card portal-card-deep">
+          <div class="portal-card-icon">+</div>
+          <div class="portal-card-copy">
+            <h2>Cadastros</h2>
+            <p>Gerencie registros e premissas com inclusão manual e importação em massa por planilha.</p>
+            <a href="/simulador.html" class="portal-link">Entrar</a>
           </div>
         </article>
 
-        <article class="card">
-          <span class="badge">Sistema 2 em estruturação</span>
-          <h2>Tarifador</h2>
-          <p>Módulo com área preparada para regras de cálculo e fluxo de dados em próxima etapa.</p>
-          <div class="actions">
-            <a href="/tarifador.html"><button class="btn btn-secondary">Acessar Tarifador</button></a>
+        <article class="portal-card portal-card-blue">
+          <div class="portal-card-icon">✎</div>
+          <div class="portal-card-copy">
+            <h2>Edição</h2>
+            <p>Atualize cenários existentes, revise contexto e ajuste parâmetros sem sair do portal.</p>
+            <a href="/simulador.html" class="portal-link">Entrar</a>
           </div>
+        </article>
+
+        <article class="portal-card portal-card-green">
+          <div class="portal-card-icon">∑</div>
+          <div class="portal-card-copy">
+            <h2>Tarifador</h2>
+            <p>Consulte e calcule tarifas operacionais com regras da próxima etapa já preparadas.</p>
+            <a href="/tarifador.html" class="portal-link">Entrar</a>
+          </div>
+        </article>
+      </section>
+
+      <section class="portal-meta" aria-label="Resumo operacional">
+        <article class="meta-tile">
+          <span>Fluxo principal</span>
+          <strong>Simulador com Excel</strong>
+        </article>
+        <article class="meta-tile">
+          <span>Modelo de carga</span>
+          <strong>Template XLSX</strong>
+        </article>
+        <article class="meta-tile">
+          <span>Saída executiva</span>
+          <strong>Relatório PDF</strong>
+        </article>
+        <article class="meta-tile">
+          <span>Status atual</span>
+          <strong>Operação local</strong>
+        </article>
+      </section>
+
+      <section class="portal-panels">
+        <article class="portal-panel">
+          <h3>Fluxo recomendado</h3>
+          <ol>
+            <li>Baixe o template padrão de simulação.</li>
+            <li>Preencha premissas e deltas no Excel.</li>
+            <li>Faça upload da planilha no Simulador.</li>
+            <li>Revise os resultados e gere o PDF.</li>
+          </ol>
+        </article>
+
+        <article class="portal-panel portal-panel-highlight">
+          <h3>Atalhos operacionais</h3>
+          <ul>
+            <li><a href="/simulador.html">Simulador de Cenários</a></li>
+            <li><a href="/tarifador.html">Tarifador</a></li>
+            <li><a href="/api/simulador/template" target="_blank" rel="noreferrer">Download de template Excel</a></li>
+          </ul>
         </article>
       </section>
     </main>
