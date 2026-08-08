@@ -23,7 +23,10 @@
 
 /* ── Reset de layout quando em modo simulador ──────────────────────────────── */
 body {
-  background: var(--sim-bg) !important;
+  background:
+    radial-gradient(circle at 8% 15%, rgba(41, 157, 255, 0.16), transparent 26%),
+    radial-gradient(circle at 82% 18%, rgba(31, 116, 214, 0.14), transparent 28%),
+    linear-gradient(180deg, #0b3a62 0%, #0a2f53 32%, #082947 100%) !important;
   color: var(--sim-ink) !important;
   margin: 0;
   min-height: 100vh;
@@ -42,6 +45,77 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+/* ── Hero inspirado no Figma ─────────────────────────────────────────────── */
+.sim-figma-hero {
+  margin: 14px 18px 0;
+  border: 1px solid color-mix(in srgb, var(--sim-border) 88%, #9dc8ff 12%);
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(6, 34, 67, 0.92), rgba(8, 53, 95, 0.88)),
+    linear-gradient(120deg, transparent 20%, rgba(58, 163, 255, 0.12) 40%, transparent 60%);
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.26);
+}
+
+.sim-figma-hero-top {
+  padding: 14px 18px;
+  background: rgba(3, 35, 66, 0.66);
+  border-bottom: 1px solid var(--sim-border);
+  font-size: 0.98rem;
+}
+
+.sim-figma-hero-body {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.sim-figma-copy h1 {
+  margin: 0;
+  font-size: clamp(1.38rem, 2.1vw, 2rem);
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+.sim-figma-copy p {
+  margin: 8px 0 0;
+  max-width: 65ch;
+  color: #c8daef;
+}
+
+.sim-figma-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.sim-figma-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 18px 16px;
+}
+
+.sim-entry-card {
+  border: 1px solid color-mix(in srgb, var(--sim-border) 80%, #8bbfff 20%);
+  border-radius: 10px;
+  background: rgba(12, 47, 82, 0.84);
+  padding: 12px;
+}
+
+.sim-entry-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.sim-entry-card p {
+  margin: 8px 0 0;
+  color: #b8cde4;
+  font-size: 0.84rem;
+  line-height: 1.4;
 }
 
 .sim-header-left {
@@ -125,8 +199,9 @@ body {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 0;
-  height: calc(100vh - 52px - 2px);
+  height: calc(100vh - 52px - 2px - 286px);
   overflow: hidden;
+  margin-top: 10px;
 }
 
 /* ── Sidebar ───────────────────────────────────────────────────────────────── */
@@ -462,6 +537,38 @@ body {
   background: var(--sim-surface);
 }
 
+.sim-curva-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sim-curva-tabs {
+  display: inline-flex;
+  border: 1px solid var(--sim-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.sim-curva-tab {
+  border: 0;
+  background: transparent;
+  color: var(--sim-muted);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+}
+
+.sim-curva-tab-active {
+  background: color-mix(in srgb, var(--sim-accent) 26%, transparent);
+  color: #dff1ff;
+}
+
 .sim-curva-card h4,
 .sim-workspace-table h4 {
   margin: 0 0 8px;
@@ -625,6 +732,22 @@ body {
 
 /* ── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
+  .sim-figma-hero {
+    margin: 10px 10px 0;
+  }
+
+  .sim-figma-hero-body {
+    flex-direction: column;
+  }
+
+  .sim-figma-actions {
+    align-items: flex-start;
+  }
+
+  .sim-figma-cards {
+    grid-template-columns: 1fr;
+  }
+
   .sim-layout {
     grid-template-columns: 1fr;
     height: auto;

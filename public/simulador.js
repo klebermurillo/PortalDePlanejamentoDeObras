@@ -439,6 +439,20 @@ function renderTabelaPenalidades(impacto) {
   `).join("");
 }
 
+function setCurvaTab(mode) {
+  const tabPercentual = document.getElementById("tab-curva-percentual");
+  const tabCapex = document.getElementById("tab-curva-capex");
+  const curvaPercentual = document.getElementById("sim-curva-percentual");
+  const curvaCapex = document.getElementById("sim-curva-capex");
+
+  const showPercentual = mode !== "capex";
+
+  tabPercentual.classList.toggle("sim-curva-tab-active", showPercentual);
+  tabCapex.classList.toggle("sim-curva-tab-active", !showPercentual);
+  curvaPercentual.hidden = !showPercentual;
+  curvaCapex.hidden = showPercentual;
+}
+
 function aplicarCenarioSimulacao() {
   const projetoId = Number(document.getElementById("sim-work-obra").value);
   const projeto = projetos.find((p) => p.id === projetoId) ?? projetoAtivo;
@@ -690,6 +704,8 @@ document.getElementById("sim-work-percent").addEventListener("input", (event) =>
   const percentual = clamp(Number(event.target.value || 0), 0, 100);
   document.getElementById("sim-work-percent-label").textContent = `${Math.round(percentual)}%`;
 });
+document.getElementById("tab-curva-percentual").addEventListener("click", () => setCurvaTab("percentual"));
+document.getElementById("tab-curva-capex").addEventListener("click", () => setCurvaTab("capex"));
 document.getElementById("btn-aplicar-cenario").addEventListener("click", aplicarCenarioSimulacao);
 document.getElementById("sim-work-ano").addEventListener("change", aplicarCenarioSimulacao);
 document.getElementById("sim-work-tipo").addEventListener("change", aplicarCenarioSimulacao);
@@ -706,4 +722,6 @@ document.getElementById("sim-work-tipo").addEventListener("change", aplicarCenar
   } else {
     aplicarCenarioSimulacao();
   }
+
+  setCurvaTab("percentual");
 })();
