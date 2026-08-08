@@ -99,6 +99,27 @@ CREATE TABLE IF NOT EXISTS simulacoes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Simulador (registros operacionais importados/manuais)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS simulador_registros (
+  id                    INT AUTO_INCREMENT PRIMARY KEY,
+  id_projeto            VARCHAR(40)    NOT NULL,
+  usuario               VARCHAR(120)   NOT NULL,
+  data_simulacao        DATE           NULL,
+  entregavel            VARCHAR(255)   NULL,
+  capex_estimado_atual  DECIMAL(18,2)  NULL,
+  capex_estimado_sim    DECIMAL(18,2)  NULL,
+  ano_contratual_sim    VARCHAR(10)    NULL,
+  ano_real_sim          VARCHAR(10)    NULL,
+  ponto_atencao         TEXT           NULL,
+  contexto              TEXT           NULL,
+  created_at            DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at            DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_simulador_registros_usuario (usuario),
+  INDEX idx_simulador_registros_projeto (id_projeto)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Historico — rastreabilidade de acoes por usuario
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS simulacoes_historico (
