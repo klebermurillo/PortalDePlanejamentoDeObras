@@ -499,7 +499,7 @@ body {
 
 .sim-workspace-kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -576,6 +576,57 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--sim-muted);
+}
+
+.sim-curve-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  color: var(--sim-muted);
+  font-size: 0.78rem;
+}
+
+.sim-curve-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sim-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.sim-legend-contract { background: #60a5fa; }
+.sim-legend-contract-sim { background: #38bdf8; }
+.sim-legend-real { background: #f97316; }
+.sim-legend-real-sim { background: #facc15; }
+
+.sim-inline-actions,
+.sim-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.sim-section-header {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.sim-detail-block {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--sim-border);
+}
+
+.sim-detail-table {
+  min-width: 760px;
 }
 
 .sim-curva-card svg {

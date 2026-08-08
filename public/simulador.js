@@ -261,14 +261,22 @@ async function carregarSimulacoes() {
 
 function renderSimulacoes() {
   const tbody = document.getElementById("simulacoes-tbody");
+  const diretoria = document.getElementById("filtro-diretoria").value;
+  const programa = document.getElementById("filtro-programa").value;
+  const busca = textoBusca(document.getElementById("filtro-busca").value.trim());
+  const hasFilters = Boolean(diretoria || programa || busca);
+  const visibleProjectIds = new Set(projetos.map((p) => p.id));
+  const visibleSimulacoes = hasFilters
+    ? simulacoes.filter((s) => visibleProjectIds.has(s.projetoId))
+    : simulacoes;
   tbody.innerHTML = "";
 
-  if (simulacoes.length === 0) {
+  if (visibleSimulacoes.length === 0) {
     tbody.innerHTML = '<tr><td colspan="12" class="sim-empty-row">Não encontramos nada para mostrar aqui</td></tr>';
     return;
   }
 
-  simulacoes.forEach(s => {
+  visibleSimulacoes.forEach(s => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="sim-td-nome">${textoDisplay(s.nomeProjeto)}</td>
@@ -329,6 +337,31 @@ function rangeAnos(minAno, maxAno) {
   return anos;
 }
 
+function cumulativeSeries(anos, distribuicao) {
+  let acumulado = 0;
+  return anos.map((ano) => {
+    acumulado += distribuicao.get(ano) ?? 0;
+    return acumulado;
+  });
+}
+
+function scaleSeries(values, divisor = 1) {
+  return values.map((value) => value / divisor);
+}
+
+function valueAtYear(anos, series, year) {
+  const index = anos.indexOf(year);
+  if (index < 0) return 0;
+  return series[index] ?? 0;
+}
+
+function calcularAderencia(anos, serieReal, serieContrato, anoContrato) {
+  const real = valueAtYear(anos, serieReal, anoContrato);
+  const contrato = valueAtYear(anos, serieContrato, anoContrato);
+  if (!contrato) return 0;
+  return (real / contrato) * 100;
+}
+
 function buildCurvePath(points, width, height, padding) {
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
@@ -352,7 +385,7 @@ function buildCurvePath(points, width, height, padding) {
   return points.map((point, index) => `${index === 0 ? "M" : "L"}${toX(point.x).toFixed(2)} ${toY(point.y).toFixed(2)}`).join(" ");
 }
 
-function renderCurvaSvg(svgId, anos, baseValues, simValues, yLegend) {
+function renderCurvaSvg(svgId, anos, series, yLegend) {
   const svg = document.getElementById(svgId);
   if (!svg) return;
 
@@ -365,14 +398,10 @@ function renderCurvaSvg(svgId, anos, baseValues, simValues, yLegend) {
     return;
   }
 
-  const basePoints = anos.map((ano, index) => ({ x: ano, y: baseValues[index] }));
-  const simPoints = anos.map((ano, index) => ({ x: ano, y: simValues[index] }));
-  const maxY = Math.max(...baseValues, ...simValues, 1);
+  const allValues = series.flatMap((item) => item.values);
+  const maxY = Math.max(...allValues, 1);
   const chartH = height - padding.top - padding.bottom;
   const chartW = width - padding.left - padding.right;
-
-  const pathBase = buildCurvePath(basePoints, width, height, padding);
-  const pathSim = buildCurvePath(simPoints, width, height, padding);
 
   const yTicks = Array.from({ length: 5 }, (_, idx) => idx / 4).map((fraction) => maxY * fraction);
   const gridLines = yTicks.map((tick) => {
@@ -391,13 +420,18 @@ function renderCurvaSvg(svgId, anos, baseValues, simValues, yLegend) {
     return `<text x="8" y="${(y + 3).toFixed(2)}" fill="var(--sim-muted)" font-size="10">${yLegend(tick)}</text>`;
   }).join("");
 
+  const paths = series.map((serie) => {
+    const points = anos.map((ano, index) => ({ x: ano, y: serie.values[index] }));
+    return `<path d="${buildCurvePath(points, width, height, padding)}" stroke="${serie.color}" stroke-width="3" fill="none" ${serie.dash ? `stroke-dasharray="${serie.dash}"` : ""} />`;
+  }).join("");
+
+  const legends = series.map((serie, index) => `<text x="${padding.left + (index * 108)}" y="12" fill="${serie.color}" font-size="10">${serie.label}</text>`).join("");
+
   svg.innerHTML = `
     <rect x="0" y="0" width="${width}" height="${height}" fill="transparent" />
     ${gridLines}
-    <path d="${pathBase}" stroke="#60a5fa" stroke-width="3" fill="none" />
-    <path d="${pathSim}" stroke="#f97316" stroke-width="3" fill="none" />
-    <text x="${padding.left}" y="12" fill="var(--sim-muted)" font-size="10">Base</text>
-    <text x="${padding.left + 42}" y="12" fill="#f97316" font-size="10">Simulado</text>
+    ${paths}
+    ${legends}
     ${xLabels}
     ${yLabels}
   `;
@@ -449,9 +483,12 @@ function calcularOutorgaEMulta({ capexImpactado, anoBase, anoRealocacao, movimen
     tipo,
     deslocamento,
     percentual,
+    anoReferencia: anoBase,
     vpl,
     acrescimoOutorga,
+    parcelaOutorgaTri,
     parcelaTrimestral,
+    indiceIRTBase: indiceIRT,
     totalOutorga,
     multiplicador,
     valorFinalParcelas,
@@ -480,6 +517,49 @@ function renderTabelaPenalidades(impacto) {
       <td>${linha.item}</td>
       <td>${linha.valor}</td>
       <td>${linha.obs}</td>
+    </tr>
+  `).join("");
+}
+
+function renderOutorgaDetalhada(impacto) {
+  const tbody = document.getElementById("sim-outorga-detalhe-tbody");
+  const totalPeriodos = Math.max(1, impacto.deslocamento * 4);
+  let acumulado = 0;
+
+  const rows = Array.from({ length: totalPeriodos }, (_, index) => {
+    const periodo = index + 1;
+    const trimestre = ((index % 4) + 1);
+    const ano = impacto.anoReferencia + Math.floor(index / 4) + 1;
+    const irt = Number((impacto.indiceIRTBase * ((1 + 0.012) ** index)).toFixed(4));
+    const parcelaTri = impacto.parcelaOutorgaTri;
+    const parcelaAjustada = parcelaTri * irt;
+    acumulado += parcelaAjustada;
+
+    return `
+      <tr>
+        <td>${periodo}</td>
+        <td>${ano}</td>
+        <td>T${trimestre}</td>
+        <td>${irt.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</td>
+        <td>${fmtCapex(parcelaTri)}</td>
+        <td>${fmtCapex(parcelaAjustada)}</td>
+        <td>${fmtCapex(acumulado)}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = rows.join("");
+}
+
+function renderResumoAnual(anos, data) {
+  const tbody = document.getElementById("sim-resumo-anual-tbody");
+  tbody.innerHTML = anos.map((ano, index) => `
+    <tr>
+      <td>${ano}</td>
+      <td>${fmtCapex(data.contractCurrent[index] ?? 0)}</td>
+      <td>${fmtCapex(data.contractSim[index] ?? 0)}</td>
+      <td>${fmtCapex(data.realCurrent[index] ?? 0)}</td>
+      <td>${fmtCapex(data.realSim[index] ?? 0)}</td>
     </tr>
   `).join("");
 }
@@ -516,44 +596,60 @@ function aplicarCenarioSimulacao() {
   const capexImpactado = capexTotal * (percentual / 100);
   const capexNaoImpactado = capexTotal - capexImpactado;
 
-  const baseInicio = anoBase - 3;
-  const simFim = anoRealocacao;
-  const simInicio = simFim - 3;
+  const anoContratualBase = toYear(projeto.anoContratual, anoBase);
+  const anoRealBase = toYear(projeto.anoReal, anoContratualBase);
+  const gapRealBase = Math.max(0, anoRealBase - anoContratualBase);
+  const anoContratualSim = toYear(document.getElementById("sim-ano-contratual").value, anoRealocacao);
+  const anoRealSim = toYear(document.getElementById("sim-ano-real").value, anoContratualSim + gapRealBase);
 
-  const baseDistribuicao = distribuirCapexAnual(capexTotal, baseInicio, anoBase);
-  const simDistribuicao = mergeDistribuicoes(
-    distribuirCapexAnual(capexNaoImpactado, baseInicio, anoBase),
-    distribuirCapexAnual(capexImpactado, simInicio, simFim)
+  const baseInicio = Math.min(anoContratualBase, anoRealBase) - 3;
+  const simInicio = Math.min(anoContratualSim, anoRealSim) - 3;
+  const simFim = Math.max(anoContratualSim, anoRealSim);
+
+  const contractCurrentMap = distribuirCapexAnual(capexTotal, baseInicio, anoContratualBase);
+  const realCurrentMap = distribuirCapexAnual(capexTotal, baseInicio, anoRealBase);
+  const contractSimMap = mergeDistribuicoes(
+    distribuirCapexAnual(capexNaoImpactado, baseInicio, anoContratualBase),
+    distribuirCapexAnual(capexImpactado, simInicio, anoContratualSim)
+  );
+  const realSimMap = mergeDistribuicoes(
+    distribuirCapexAnual(capexNaoImpactado, baseInicio, anoRealBase),
+    distribuirCapexAnual(capexImpactado, simInicio, anoRealSim)
   );
 
   const minAno = Math.min(baseInicio, simInicio) - 1;
-  const maxAno = Math.max(anoBase, simFim) + 2;
+  const maxAno = Math.max(anoContratualBase, anoRealBase, anoContratualSim, anoRealSim) + 2;
   const anos = rangeAnos(minAno, maxAno);
 
-  let acumuladoBase = 0;
-  let acumuladoSim = 0;
+  const contractCurrent = cumulativeSeries(anos, contractCurrentMap);
+  const contractSim = cumulativeSeries(anos, contractSimMap);
+  const realCurrent = cumulativeSeries(anos, realCurrentMap);
+  const realSim = cumulativeSeries(anos, realSimMap);
 
-  const baseAcumulada = anos.map((ano) => {
-    acumuladoBase += baseDistribuicao.get(ano) ?? 0;
-    return acumuladoBase / 1000000;
-  });
+  const capexSeries = [
+    { label: "BL Contratual", color: "#60a5fa", values: scaleSeries(contractCurrent, 1000000) },
+    { label: "BL Contratual Sim", color: "#38bdf8", values: scaleSeries(contractSim, 1000000), dash: "8 6" },
+    { label: "Real/Tend", color: "#f97316", values: scaleSeries(realCurrent, 1000000) },
+    { label: "Real/Tend Sim", color: "#facc15", values: scaleSeries(realSim, 1000000), dash: "10 6" }
+  ];
 
-  const simAcumulada = anos.map((ano) => {
-    acumuladoSim += simDistribuicao.get(ano) ?? 0;
-    return acumuladoSim / 1000000;
-  });
+  const percentualSeries = [
+    { label: "BL Contratual", color: "#60a5fa", values: contractCurrent.map((v) => capexTotal > 0 ? (v / capexTotal) * 100 : 0) },
+    { label: "BL Contratual Sim", color: "#38bdf8", values: contractSim.map((v) => capexTotal > 0 ? (v / capexTotal) * 100 : 0), dash: "8 6" },
+    { label: "Real/Tend", color: "#f97316", values: realCurrent.map((v) => capexTotal > 0 ? (v / capexTotal) * 100 : 0) },
+    { label: "Real/Tend Sim", color: "#facc15", values: realSim.map((v) => capexTotal > 0 ? (v / capexTotal) * 100 : 0), dash: "10 6" }
+  ];
 
-  const basePercentual = baseAcumulada.map((valor) => (capexTotal > 0 ? (valor * 1000000 / capexTotal) * 100 : 0));
-  const simPercentual = simAcumulada.map((valor) => (capexTotal > 0 ? (valor * 1000000 / capexTotal) * 100 : 0));
-
-  renderCurvaSvg("sim-curva-capex", anos, baseAcumulada, simAcumulada, (v) => `${v.toFixed(1)} mi`);
-  renderCurvaSvg("sim-curva-percentual", anos, basePercentual, simPercentual, (v) => `${v.toFixed(0)}%`);
+  renderCurvaSvg("sim-curva-capex", anos, capexSeries, (v) => `${v.toFixed(1)} mi`);
+  renderCurvaSvg("sim-curva-percentual", anos, percentualSeries, (v) => `${v.toFixed(0)}%`);
 
   const deltaPrazo = anoRealocacao - anoBase;
   document.getElementById("kpi-capex-base").textContent = fmtMi(capexTotal);
-  document.getElementById("kpi-capex-sim").textContent = fmtMi(capexTotal);
+  document.getElementById("kpi-capex-sim").textContent = fmtMi(capexNaoImpactado + capexImpactado);
   document.getElementById("kpi-delta-prazo").textContent = `${deltaPrazo >= 0 ? "+" : ""}${deltaPrazo} ano(s)`;
   document.getElementById("kpi-percentual").textContent = fmtPercent(percentual);
+  document.getElementById("kpi-aderencia-atual").textContent = fmtPercent(calcularAderencia(anos, realCurrent, contractCurrent, anoContratualBase));
+  document.getElementById("kpi-aderencia-sim").textContent = fmtPercent(calcularAderencia(anos, realSim, contractSim, anoContratualSim));
 
   const impacto = calcularOutorgaEMulta({
     capexImpactado,
@@ -564,6 +660,13 @@ function aplicarCenarioSimulacao() {
   });
 
   renderTabelaPenalidades(impacto);
+  renderOutorgaDetalhada(impacto);
+  renderResumoAnual(anos, {
+    contractCurrent: anos.map((ano) => contractCurrentMap.get(ano) ?? 0),
+    contractSim: anos.map((ano) => contractSimMap.get(ano) ?? 0),
+    realCurrent: anos.map((ano) => realCurrentMap.get(ano) ?? 0),
+    realSim: anos.map((ano) => realSimMap.get(ano) ?? 0)
+  });
   document.getElementById("sim-work-percent-label").textContent = `${Math.round(percentual)}%`;
 
   workspaceState.obraId = projeto.id;
@@ -748,6 +851,18 @@ document.getElementById("sim-work-obra").addEventListener("change", (event) => {
 document.getElementById("sim-work-percent").addEventListener("input", (event) => {
   const percentual = clamp(Number(event.target.value || 0), 0, 100);
   document.getElementById("sim-work-percent-label").textContent = `${Math.round(percentual)}%`;
+});
+document.getElementById("btn-toggle-resumo-anual").addEventListener("click", () => {
+  const wrap = document.getElementById("sim-resumo-anual-wrap");
+  const hidden = wrap.hasAttribute("hidden");
+  wrap.toggleAttribute("hidden");
+  document.getElementById("btn-toggle-resumo-anual").textContent = hidden ? "Ocultar resumo anual" : "Ver resumo anual";
+});
+document.getElementById("btn-toggle-outorga-detalhe").addEventListener("click", () => {
+  const wrap = document.getElementById("sim-outorga-detalhe-wrap");
+  const hidden = wrap.hasAttribute("hidden");
+  wrap.toggleAttribute("hidden");
+  document.getElementById("btn-toggle-outorga-detalhe").textContent = hidden ? "Ocultar detalhamento" : "Ver detalhamento";
 });
 document.getElementById("tab-curva-percentual").addEventListener("click", () => setCurvaTab("percentual"));
 document.getElementById("tab-curva-capex").addEventListener("click", () => setCurvaTab("capex"));

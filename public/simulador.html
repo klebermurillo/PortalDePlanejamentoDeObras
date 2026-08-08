@@ -203,6 +203,14 @@
               <span>Percentual Impactado</span>
               <strong id="kpi-percentual">—</strong>
             </article>
+            <article class="sim-kpi-card">
+              <span>Aderência Atual</span>
+              <strong id="kpi-aderencia-atual">—</strong>
+            </article>
+            <article class="sim-kpi-card">
+              <span>Aderência Simulada</span>
+              <strong id="kpi-aderencia-sim">—</strong>
+            </article>
           </div>
 
           <article class="sim-curva-card" id="workspace-curva">
@@ -213,12 +221,42 @@
                 <button id="tab-curva-capex" class="sim-curva-tab" type="button">CAPEX</button>
               </div>
             </div>
+            <div class="sim-curve-legend">
+              <span><i class="sim-legend-dot sim-legend-contract"></i>BL Contratual</span>
+              <span><i class="sim-legend-dot sim-legend-contract-sim"></i>BL Contratual Sim</span>
+              <span><i class="sim-legend-dot sim-legend-real"></i>Real/Tendência</span>
+              <span><i class="sim-legend-dot sim-legend-real-sim"></i>Real/Tendência Sim</span>
+            </div>
             <svg id="sim-curva-percentual" viewBox="0 0 760 260" role="img" aria-label="Curva S percentual"></svg>
             <svg id="sim-curva-capex" viewBox="0 0 760 260" role="img" aria-label="Curva S de CAPEX" hidden></svg>
+            <div class="sim-inline-actions">
+              <button id="btn-toggle-resumo-anual" class="sim-btn sim-btn-ghost" type="button">Ver resumo anual</button>
+            </div>
+            <div id="sim-resumo-anual-wrap" class="sim-detail-block" hidden>
+              <div class="table-wrap">
+                <table class="sim-table sim-detail-table">
+                  <thead>
+                    <tr>
+                      <th>Ano</th>
+                      <th>BL Contratual</th>
+                      <th>BL Contratual Sim</th>
+                      <th>Real/Tend. Atual</th>
+                      <th>Real/Tend. Sim</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sim-resumo-anual-tbody">
+                    <tr><td colspan="5" class="sim-empty-row">Aplique um cenário para ver o resumo ano a ano.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </article>
 
           <div class="sim-workspace-table" id="workspace-outorga">
-            <h4>Tabela de Multas e Outorgas</h4>
+            <div class="sim-section-header">
+              <h4>Tabela de Multas e Outorgas</h4>
+              <button id="btn-toggle-outorga-detalhe" class="sim-btn sim-btn-ghost" type="button">Ver detalhamento</button>
+            </div>
             <div class="table-wrap">
               <table class="sim-table sim-penalty-table">
                 <thead>
@@ -232,6 +270,26 @@
                   <tr><td colspan="3" class="sim-empty-row">Selecione uma obra e aplique um cenário para visualizar os impactos.</td></tr>
                 </tbody>
               </table>
+            </div>
+            <div id="sim-outorga-detalhe-wrap" class="sim-detail-block" hidden>
+              <div class="table-wrap">
+                <table class="sim-table sim-detail-table">
+                  <thead>
+                    <tr>
+                      <th>Período</th>
+                      <th>Ano</th>
+                      <th>Trimestre</th>
+                      <th>IRT</th>
+                      <th>Parcela Tri</th>
+                      <th>Parcela Ajustada</th>
+                      <th>Total Acumulado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sim-outorga-detalhe-tbody">
+                    <tr><td colspan="7" class="sim-empty-row">Aplique um cenário para ver o detalhamento das parcelas.</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
