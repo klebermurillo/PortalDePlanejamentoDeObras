@@ -13,6 +13,7 @@ Este repositorio agora contem uma API Node.js/TypeScript para executar no portal
 - `POST /api/relatorios/gerar`
 - `GET /api/relatorios/:id`
 - `POST /api/atualizar-historico`
+- `POST /api/simulador/upload`
 
 ### Executar localmente
 
@@ -54,7 +55,7 @@ Com o servidor rodando, abra:
 ### Persistencia local
 
 - Banco SQLite local: `data/portal.db`
-- Fluxo sem dependencias Microsoft nesta fase inicial
+- Fluxo sem dependências de SharePoint nesta fase inicial
 
 ### Perfilamento (base para proxima fase)
 

@@ -13,6 +13,18 @@ import {
   importarExcelParaSimulador,
   listarRegistrosSimulador
 } from "../services/simuladorService";
+import {
+  listarProjetos,
+  buscarProjetoPorId,
+  listarDiretorias,
+  listarProgramas
+} from "../services/projetosService";
+import {
+  listarSimulacoes,
+  criarSimulacao,
+  atualizarSimulacao,
+  excluirSimulacao
+} from "../services/simulacoesService";
 
 const upload = multer({ storage: multer.memoryStorage() });
 export const apiRouter = express.Router();
@@ -244,10 +256,108 @@ apiRouter.post("/atualizar-historico", async (req: Request, res: Response) => {
     return res.status(200).json({
       status: "queued",
       referencia: body.referencia,
-      message: "Integracao pronta para substituir o flow Atualizar Historico com Graph/Office Script."
+      message: "Integração futura pode ser ativada sem depender de SharePoint."
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado";
     return res.status(400).json({ error: message });
   }
+});
+
+// ── Projetos (base oficial) ───────────────────────────────────────────────────
+
+apiRouter.get("/projetos", async (req: Request, res: Response) => {
+  try {
+    const projetos = await listarProjetos({
+      diretoriaId: req.query.diretoriaId ? Number(req.query.diretoriaId) : undefined,
+      programaId:  req.query.programaId  ? Number(req.query.programaId)  : undefined,
+      escopo: req.query.escopo  ? String(req.query.escopo)  : undefined,
+      busca:  req.query.busca   ? String(req.query.busca)   : undefined
+    });
+    return res.status(200).json({ total: projetos.length, projetos });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(500).json({ error: message });
+  }
+});
+
+apiRouter.get("/projetos/:id", async (req: Request, res: Response) => {
+  const projeto = await buscarProjetoPorId(Number(req.params.id));
+  if (!projeto) return res.status(404).json({ error: "Projeto nao encontrado." });
+  return res.status(200).json(projeto);
+});
+
+apiRouter.get("/diretorias", async (_req: Request, res: Response) => {
+  const diretorias = await listarDiretorias();
+  return res.status(200).json(diretorias);
+});
+
+apiRouter.get("/programas", async (req: Request, res: Response) => {
+  const programas = await listarProgramas(
+    req.query.diretoriaId ? Number(req.query.diretoriaId) : undefined
+  );
+  return res.status(200).json(programas);
+});
+
+// ── Simulacoes (cenarios do usuario) ─────────────────────────────────────────
+
+const simulacaoSchema = z.object({
+  projetoId:         z.number().int().positive(),
+  dataSimulacao:     z.string().optional(),
+  capexEstimadoSim:  z.number().optional(),
+  anoContratualSim:  z.string().optional(),
+  anoRealSim:        z.string().optional(),
+  pontoAtencao:      z.string().optional(),
+  contexto:          z.string().optional()
+});
+
+apiRouter.get("/simulacoes", async (req: Request, res: Response) => {
+  try {
+    const auth = getAuthContext(req);
+    const simulacoes = await listarSimulacoes(
+      auth.perfil === "adm"
+        ? { projetoId: req.query.projetoId ? Number(req.query.projetoId) : undefined }
+        : { usuario: auth.usuario }
+    );
+    return res.status(200).json({ total: simulacoes.length, simulacoes });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(500).json({ error: message });
+  }
+});
+
+apiRouter.post("/simulacoes", async (req: Request, res: Response) => {
+  try {
+    const auth = getAuthContext(req);
+    const body = simulacaoSchema.parse(req.body ?? {});
+    const created = await criarSimulacao({ ...body, usuario: auth.usuario });
+    return res.status(201).json(created);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
+});
+
+apiRouter.put("/simulacoes/:id", async (req: Request, res: Response) => {
+  try {
+    const auth = getAuthContext(req);
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "ID invalido." });
+
+    const body = simulacaoSchema.partial().parse(req.body ?? {});
+    const updated = await atualizarSimulacao(id, { ...body, usuario: auth.usuario });
+    if (!updated) return res.status(404).json({ error: "Simulacao nao encontrada." });
+    return res.status(200).json(updated);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
+});
+
+apiRouter.delete("/simulacoes/:id", async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "ID invalido." });
+  const deleted = await excluirSimulacao(id);
+  if (!deleted) return res.status(404).json({ error: "Simulacao nao encontrada." });
+  return res.status(204).send();
 });

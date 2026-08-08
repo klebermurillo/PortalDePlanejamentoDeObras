@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,236 +8,168 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/simulador.css" />
   </head>
   <body>
-    <div class="toolbar">
-      <button id="theme-toggle" class="theme-toggle" type="button">Tema</button>
-    </div>
-    <main class="shell shell-simulator">
-      <section class="hero">
-        <span class="eyebrow">Simulações de engenharia e planejamento</span>
-        <h1 class="title">E se eu mudar alguma coisa?</h1>
-        <p class="subtitle">Projete impacto em custo, prazo e aderência usando uma visão executiva do cenário atual versus a simulação proposta.</p>
-        <div class="actions">
-          <a href="/"><button class="btn btn-secondary">Voltar para Início</button></a>
-          <a href="/api/simulador/template"><button class="btn btn-primary">Baixar Modelo Excel</button></a>
+
+    <!-- Barra superior -->
+    <header class="sim-header">
+      <div class="sim-header-left">
+        <a href="/" class="sim-brand">◎</a>
+        <nav class="sim-breadcrumb">
+          <a href="/">Início</a>
+          <span>›</span>
+          <span>Simulador de Cenários</span>
+        </nav>
+      </div>
+      <div class="sim-header-filters">
+        <select id="filtro-diretoria" class="sim-select"><option value="">Diretoria</option></select>
+        <select id="filtro-programa" class="sim-select"><option value="">Programa</option></select>
+        <input id="filtro-busca" class="sim-search-input" type="text" placeholder="Buscar entregável..." />
+        <button id="btn-limpar-filtros" class="sim-btn-ghost">✕ Limpar</button>
+      </div>
+      <div class="sim-header-right">
+        <button id="theme-toggle" class="theme-toggle">Tema</button>
+      </div>
+    </header>
+
+    <!-- Layout principal -->
+    <div class="sim-layout">
+
+      <!-- Coluna esquerda: painel de simulação -->
+      <aside class="sim-sidebar">
+        <div class="sim-sidebar-search">
+          <input id="busca-sidebar" type="text" placeholder="Informe qual entregável você deseja simular" />
+          <button id="btn-busca" class="sim-btn-icon">→</button>
         </div>
-      </section>
+        <ul id="lista-matches" class="sim-match-list" hidden></ul>
 
-      <section class="sim-layout">
-        <aside class="panel sim-parameters">
-          <div class="panel-heading">
-            <div>
-              <span class="panel-kicker">Parâmetros</span>
-              <h3>Nova simulação</h3>
-            </div>
+        <section class="sim-dados-block sim-dados-atual">
+          <div class="sim-dados-header">
+            <span class="sim-dados-label">Dados</span>
+            <span class="sim-dados-tipo">Atual</span>
           </div>
+          <div id="dados-atual-placeholder" class="sim-placeholder">Selecione um entregável para visualizar os dados atuais.</div>
+          <div id="dados-atual-content" hidden>
+            <div class="sim-field-row"><span>CAPEX Estimado</span><strong id="atual-capex">—</strong></div>
+            <div class="sim-field-row"><span>BL Contratual</span><strong id="atual-ano-contratual">—</strong></div>
+            <div class="sim-field-row"><span>Real / Tendência</span><strong id="atual-ano-real">—</strong></div>
+            <div class="sim-field-row"><span>Diretoria</span><strong id="atual-diretoria">—</strong></div>
+            <div class="sim-field-row"><span>Programa</span><strong id="atual-programa">—</strong></div>
+            <div class="sim-field-row"><span>Escopo</span><strong id="atual-escopo">—</strong></div>
+          </div>
+        </section>
 
-          <form id="cenario-form">
-            <div class="stack-fields">
-              <div>
-                <label for="numeroEquipes">Número de equipes</label>
-                <input id="numeroEquipes" name="numeroEquipes" type="number" min="1" value="12" />
-              </div>
-              <div>
-                <label for="prazoDias">Prazo (dias)</label>
-                <input id="prazoDias" name="prazoDias" type="number" min="1" value="180" />
-              </div>
-              <div>
-                <label>Horas extras</label>
-                <div class="segmented" id="horasExtrasToggle">
-                  <button type="button" class="segmented-btn active" data-value="sim">Sim</button>
-                  <button type="button" class="segmented-btn" data-value="nao">Não</button>
-                </div>
-              </div>
-              <div>
-                <label for="outorgaValor">Outorga (R$)</label>
-                <input id="outorgaValor" name="outorgaValor" type="number" min="0" step="0.01" value="150000" />
-              </div>
-              <div>
-                <label for="multaPercentual">Multa contratual (%)</label>
-                <input id="multaPercentual" name="multaPercentual" type="number" min="0" step="0.1" value="5" />
-              </div>
-              <div>
-                <label for="riscoOperacional">Risco operacional</label>
-                <select id="riscoOperacional" name="riscoOperacional">
-                  <option value="baixo">Baixo</option>
-                  <option value="medio" selected>Médio</option>
-                  <option value="alto">Alto</option>
-                </select>
-              </div>
+        <section class="sim-dados-block sim-dados-simulacao">
+          <div class="sim-dados-header">
+            <span class="sim-dados-label">Dados</span>
+            <span class="sim-dados-tipo sim-dados-tipo-sim">Simulação</span>
+          </div>
+          <form id="sim-form">
+            <input type="hidden" id="sim-projeto-id" />
+            <input type="hidden" id="sim-id" />
+            <div class="sim-form-field">
+              <label for="sim-capex">CAPEX Simulado</label>
+              <input id="sim-capex" name="capexEstimadoSim" type="number" step="0.01" placeholder="Valor em R$" />
             </div>
-
-            <div class="actions">
-              <button type="submit" class="btn btn-accent btn-block">Simular cenário</button>
+            <div class="sim-form-field">
+              <label for="sim-ano-contratual">Ano BL Contratual</label>
+              <input id="sim-ano-contratual" name="anoContratualSim" type="text" placeholder="Ex.: 2028" />
             </div>
+            <div class="sim-form-field">
+              <label for="sim-ano-real">Ano Real / Tendência</label>
+              <input id="sim-ano-real" name="anoRealSim" type="text" placeholder="Ex.: 2029" />
+            </div>
+            <div class="sim-form-field">
+              <label for="sim-contexto">Contexto</label>
+              <textarea id="sim-contexto" name="contexto" rows="3" placeholder="Descreva o contexto da simulação"></textarea>
+            </div>
+            <div class="sim-form-field">
+              <label for="sim-ponto-atencao">Ponto de Atenção</label>
+              <textarea id="sim-ponto-atencao" name="pontoAtencao" rows="2" placeholder="Riscos ou pendências"></textarea>
+            </div>
+            <div class="sim-form-actions">
+              <button type="submit" class="sim-btn sim-btn-salvar" id="btn-salvar" disabled>↺ Salvar</button>
+              <button type="button" class="sim-btn sim-btn-ghost" id="btn-limpar-form">⊘ Limpar</button>
+              <button type="button" class="sim-btn sim-btn-danger" id="btn-apagar" hidden>✕ Apagar</button>
+            </div>
+            <div id="sim-form-msg" class="sim-msg"></div>
           </form>
-        </aside>
+        </section>
 
-        <div class="sim-main">
-          <section class="sim-kpis">
-            <article class="metric-card">
-              <span class="metric-label">Cenário atual</span>
-              <strong id="kpi-cenario-atual" class="metric-value">R$ 0</strong>
-            </article>
-            <article class="metric-card metric-card-highlight">
-              <span class="metric-label">Novo cenário</span>
-              <strong id="kpi-cenario-simulado" class="metric-value">R$ 0</strong>
-            </article>
-            <article class="metric-card metric-card-success">
-              <span class="metric-label">Economia</span>
-              <strong id="kpi-economia" class="metric-value">R$ 0</strong>
-            </article>
-          </section>
-
-          <section class="sim-grid">
-            <article class="panel sim-chart-panel">
-              <div class="panel-heading">
-                <div>
-                  <span class="panel-kicker">Curva S</span>
-                  <h3>Comparativo de custo e aderência</h3>
-                </div>
-                <div class="legend">
-                  <span><i class="legend-dot legend-dot-current"></i>Atual</span>
-                  <span><i class="legend-dot legend-dot-simulated"></i>Simulado</span>
-                  <span><i class="legend-dot legend-dot-reference"></i>Referência</span>
-                </div>
-              </div>
-
-              <div class="chart-stage">
-                <svg id="curva-s-chart" viewBox="0 0 760 320" role="img" aria-label="Curva S comparativa"></svg>
-              </div>
-
-              <div class="adherence-grid">
-                <div class="adherence-card">
-                  <span>Aderência atual</span>
-                  <strong id="kpi-aderencia-atual">0%</strong>
-                </div>
-                <div class="adherence-card adherence-card-alt">
-                  <span>Aderência simulada</span>
-                  <strong id="kpi-aderencia-simulada">0%</strong>
-                </div>
-              </div>
-            </article>
-
-            <aside class="panel sim-summary-panel">
-              <div class="panel-heading">
-                <div>
-                  <span class="panel-kicker">Resumo</span>
-                  <h3>Cenário consolidado</h3>
-                </div>
-              </div>
-
-              <div class="summary-list">
-                <div><span>Equipes</span><strong id="resumo-equipes">12</strong></div>
-                <div><span>Prazo</span><strong id="resumo-prazo">180 dias</strong></div>
-                <div><span>Horas extras</span><strong id="resumo-horas">Sim</strong></div>
-                <div><span>Outorga</span><strong id="resumo-outorga">R$ 0</strong></div>
-                <div><span>Multa</span><strong id="resumo-multa">0%</strong></div>
-                <div><span>Risco</span><strong id="resumo-risco">Médio</strong></div>
-              </div>
-
-              <div class="summary-total">
-                <span>Total simulado</span>
-                <strong id="resumo-total">R$ 0</strong>
-              </div>
-            </aside>
-          </section>
-        </div>
-      </section>
-
-      <section class="panel workspace-panel">
-        <div class="panel-heading">
-          <div>
-            <span class="panel-kicker">Operação</span>
-            <h3>Base da simulação</h3>
+        <section class="sim-import-block">
+          <div class="sim-dados-header">
+            <span class="sim-dados-label">Importação</span>
+            <span class="sim-dados-tipo">Excel</span>
           </div>
-          <div>
-            <span class="kpi">Total de registros: <strong id="kpi-total">0</strong></span>
+          <div class="sim-import-content">
+            <p>Envie uma planilha Excel para carregar simulações em massa. O portal lê o arquivo localmente e cadastra os registros.</p>
+            <input id="sim-excel-input" type="file" accept=".xlsx,.xls" />
+            <button id="btn-importar-excel" class="sim-btn sim-btn-salvar" type="button">⬆ Importar Excel</button>
+            <a class="sim-link" href="/api/simulador/template" target="_blank" rel="noreferrer">Baixar modelo</a>
+            <div id="sim-import-msg" class="sim-msg"></div>
           </div>
+        </section>
+      </aside>
+
+      <!-- Coluna direita: tabela de projetos da base -->
+      <section class="sim-table-section">
+        <div class="sim-table-header">
+          <span class="sim-table-title">Base de Projetos</span>
+          <span id="tabela-total" class="sim-table-count">0 projetos</span>
         </div>
-
-        <div class="workspace-grid">
-          <section class="subpanel">
-            <h4>Novo registro</h4>
-            <form id="registro-form">
-              <div class="form-grid">
-                <div>
-                  <label for="dataSimulacao">Data Simulação</label>
-                  <input id="dataSimulacao" name="dataSimulacao" type="date" />
-                </div>
-                <div>
-                  <label for="entregavel">Entregável</label>
-                  <input id="entregavel" name="entregavel" />
-                </div>
-                <div>
-                  <label for="capexEstimadoAtual">CAPEX Estimado Atual</label>
-                  <input id="capexEstimadoAtual" name="capexEstimadoAtual" type="number" step="0.01" />
-                </div>
-                <div>
-                  <label for="capexEstimadoSim">CAPEX Estimado Sim</label>
-                  <input id="capexEstimadoSim" name="capexEstimadoSim" type="number" step="0.01" />
-                </div>
-                <div>
-                  <label for="anoContratualSim">Ano BL Contratual Sim</label>
-                  <input id="anoContratualSim" name="anoContratualSim" />
-                </div>
-                <div>
-                  <label for="anoRealSim">Ano Real Sim</label>
-                  <input id="anoRealSim" name="anoRealSim" />
-                </div>
-                <div>
-                  <label for="pontoAtencao">Ponto de Atenção</label>
-                  <input id="pontoAtencao" name="pontoAtencao" />
-                </div>
-              </div>
-              <div class="field-block">
-                <label for="contexto">Contexto</label>
-                <textarea id="contexto" name="contexto"></textarea>
-              </div>
-              <div class="actions">
-                <button type="submit" class="btn btn-primary">Salvar Registro</button>
-                <button type="button" class="btn btn-secondary" id="cancelar-edicao" style="display:none;">Cancelar Edição</button>
-                <button type="button" class="btn btn-secondary" id="gerar-pdf">Gerar PDF da Lista</button>
-              </div>
-              <div id="form-msg" class="msg"></div>
-            </form>
-          </section>
-
-          <section class="subpanel">
-            <h4>Importação em massa</h4>
-            <form id="upload-form">
-              <div class="form-grid form-grid-single">
-                <div>
-                  <label for="arquivoExcel">Arquivo Excel</label>
-                  <input id="arquivoExcel" name="arquivo" type="file" accept=".xlsx" required />
-                </div>
-              </div>
-              <div class="actions">
-                <button class="btn btn-primary" type="submit">Importar Planilha</button>
-              </div>
-              <div id="upload-msg" class="msg"></div>
-            </form>
-          </section>
-        </div>
-
         <div class="table-wrap">
-          <table>
+          <table class="sim-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Usuário</th>
                 <th>Entregável</th>
-                <th>CAPEX Atual</th>
-                <th>CAPEX Sim</th>
-                <th>Ações</th>
+                <th>Diretoria</th>
+                <th>Programa</th>
+                <th>Escopo</th>
+                <th>CAPEX Estimado</th>
+                <th>BL Contratual</th>
+                <th>Real / Tend.</th>
+                <th>Status</th>
               </tr>
             </thead>
-            <tbody id="tabela-body"></tbody>
+            <tbody id="projetos-tbody"></tbody>
           </table>
         </div>
       </section>
-    </main>
+    </div>
+
+    <!-- Simulações salvas -->
+    <section class="sim-saved-section">
+      <div class="sim-saved-header">
+        <div>
+          <span class="panel-kicker">Histórico</span>
+          <h3>Simulações Salvas</h3>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="sim-table sim-saved-table">
+          <thead>
+            <tr>
+              <th>Entregável</th>
+              <th>Diretoria</th>
+              <th>Programa</th>
+              <th>CAPEX Atual</th>
+              <th>CAPEX Sim</th>
+              <th>BL Contratual</th>
+              <th>BL Contratual Sim</th>
+              <th>Real / Tend.</th>
+              <th>Real / Tend. Sim</th>
+              <th>Contexto</th>
+              <th>Data</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="simulacoes-tbody">
+            <tr><td colspan="12" class="sim-empty-row">Não encontramos nada para mostrar aqui</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <script src="/theme.js"></script>
     <script src="/simulador.js"></script>

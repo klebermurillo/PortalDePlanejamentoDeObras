@@ -7,7 +7,7 @@ Este documento traduz os flows atuais para endpoints e servicos no portal.
 Remover dependencia de PowerApps e Power Automate, mantendo as funcoes:
 
 1. Importar dados do Excel para base de simulacao.
-2. Atualizar historico e base de planilha.
+2. Atualizar historico e base local.
 3. Gerar graficos em base64 para o front.
 4. Gerar relatorio e disponibilizar download temporario.
 
@@ -16,11 +16,11 @@ Remover dependencia de PowerApps e Power Automate, mantendo as funcoes:
 1. Flow `SIM_IMPORTARDADOS` + flow com upload de arquivo:
 - Antes: PowerApps envia arquivo, flow grava no SharePoint, le tabela do Excel e cria itens.
 - Agora: `POST /api/importar-dados` (multipart: `arquivo`, `usuario`) parseia planilha e retorna registros normalizados.
-- Proximo passo: persistir os registros em SharePoint List via Microsoft Graph.
+- O fluxo de importação em massa passou a ser feito diretamente pelo portal via Excel.
 
 2. Flow `Fluxo atualizacao tabela base Simulador`:
 - Antes: executa Office Script e retorna JSON/base64.
-- Agora: `POST /api/atualizar-historico` (stub) ja pronto para chamar Office Script via Graph.
+- Agora: `POST /api/atualizar-historico` (stub) permanece local e pode ser expandido sem depender de SharePoint.
 
 3. Flows `GraficoExcel`, `GraficoExcel1`, `GraficoExcel2`, `TabelaCad`:
 - Antes: executa script no Excel e retorna `image` em base64.
@@ -57,9 +57,7 @@ Remover dependencia de PowerApps e Power Automate, mantendo as funcoes:
 
 ## Passos para producao
 
-1. Configurar Azure AD app (client credentials) para Graph.
-2. Conceder permissoes para arquivos e listas SharePoint.
-3. Implementar persistencia de `importar-dados` na lista final.
-4. Implementar chamada real de Office Script no endpoint `atualizar-historico`.
-5. Substituir geracao de grafico placeholder por fonte real (dados da base).
-6. Adicionar autenticacao do usuario no portal e auditoria de chamadas.
+1. Manter o fluxo de importação em Excel como fonte principal de carga em massa.
+2. Implementar persistencia de `importar-dados` na base local final.
+3. Substituir geracao de grafico placeholder por fonte real (dados da base).
+4. Adicionar autenticacao do usuario no portal e auditoria de chamadas.

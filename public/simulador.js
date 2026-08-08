@@ -1,482 +1,356 @@
-const form = document.getElementById("registro-form");
-const cenarioForm = document.getElementById("cenario-form");
-const uploadForm = document.getElementById("upload-form");
-const tabelaBody = document.getElementById("tabela-body");
-const kpiTotal = document.getElementById("kpi-total");
-const formMsg = document.getElementById("form-msg");
-const uploadMsg = document.getElementById("upload-msg");
-const cancelarBtn = document.getElementById("cancelar-edicao");
-const gerarPdfBtn = document.getElementById("gerar-pdf");
-const curvaChart = document.getElementById("curva-s-chart");
-
-const horasExtrasToggle = document.getElementById("horasExtrasToggle");
-const resumoEquipes = document.getElementById("resumo-equipes");
-const resumoPrazo = document.getElementById("resumo-prazo");
-const resumoHoras = document.getElementById("resumo-horas");
-const resumoOutorga = document.getElementById("resumo-outorga");
-const resumoMulta = document.getElementById("resumo-multa");
-const resumoRisco = document.getElementById("resumo-risco");
-const resumoTotal = document.getElementById("resumo-total");
-const kpiCenarioAtual = document.getElementById("kpi-cenario-atual");
-const kpiCenarioSimulado = document.getElementById("kpi-cenario-simulado");
-const kpiEconomia = document.getElementById("kpi-economia");
-const kpiAderenciaAtual = document.getElementById("kpi-aderencia-atual");
-const kpiAderenciaSimulada = document.getElementById("kpi-aderencia-simulada");
-
-let registros = [];
-let editandoId = null;
-let horasExtrasAtivo = "sim";
-
+// ── Estado global ─────────────────────────────────────────────────────────────
 const authContext = {
   userId: localStorage.getItem("portal-user-id") || "usuario_demo",
-  role: localStorage.getItem("portal-user-role") || "usuario"
+  role:   localStorage.getItem("portal-user-role") || "usuario"
 };
-
-function getAuthHeaders() {
-  return {
-    "x-user-id": authContext.userId,
-    "x-user-role": authContext.role
-  };
+function authHeaders() {
+  return { "x-user-id": authContext.userId, "x-user-role": authContext.role };
 }
 
-function exibirMensagem(el, texto, tipo) {
-  el.className = `msg ${tipo}`;
-  el.textContent = texto;
+let projetos     = [];
+let simulacoes   = [];
+let projetoAtivo = null;
+let simAtiva     = null;
+
+// ── Formatação ────────────────────────────────────────────────────────────────
+function fmtCapex(v) {
+  if (!v) return "—";
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 }
 
-function formatCurrency(value) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0
-  }).format(value);
-}
-
-function formatMillions(value) {
-  return `R$ ${(value / 1000000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mi`;
-}
-
-function formatPercent(value) {
-  return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
-}
-
-function getScenarioInputs() {
-  const data = new FormData(cenarioForm);
-  return {
-    numeroEquipes: Number(data.get("numeroEquipes") || 12),
-    prazoDias: Number(data.get("prazoDias") || 180),
-    horasExtras: horasExtrasAtivo === "sim",
-    outorga: Number(data.get("outorgaValor") || 0),
-    multaPercentual: Number(data.get("multaPercentual") || 0),
-    riscoOperacional: String(data.get("riscoOperacional") || "medio")
-  };
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function getDatasetTotals() {
-  const fallbackAtual = 18400000;
-  const fallbackSimulado = 17100000;
-
-  const totalAtual = registros.reduce((acc, item) => acc + Number(item.capexEstimadoAtual || 0), 0);
-  const totalSim = registros.reduce((acc, item) => acc + Number(item.capexEstimadoSim || 0), 0);
-
-  return {
-    atual: totalAtual > 0 ? totalAtual : fallbackAtual,
-    simuladoBase: totalSim > 0 ? totalSim : fallbackSimulado,
-    quantidade: registros.length
-  };
-}
-
-function logisticCurve(points, steepness, midpoint, scale) {
-  return Array.from({ length: points }, (_, index) => {
-    const x = index / (points - 1);
-    const y = 1 / (1 + Math.exp(-steepness * (x - midpoint)));
-    return clamp(y * scale, 0, 1);
+// ── Carregar dropdowns ────────────────────────────────────────────────────────
+async function carregarDiretorias() {
+  const res  = await fetch("/api/diretorias", { headers: authHeaders() });
+  const data = await res.json();
+  const sel  = document.getElementById("filtro-diretoria");
+  sel.innerHTML = '<option value="">Diretoria</option>';
+  data.forEach(d => {
+    const opt = document.createElement("option");
+    opt.value = d.id;
+    opt.textContent = d.nome;
+    sel.appendChild(opt);
   });
 }
 
-function buildChartSeries(scenario) {
-  const labels = [2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031];
-  const referencia = logisticCurve(labels.length, 8, 0.44, 1);
-  const actualMidpoint = clamp(0.48 + scenario.riskWeight * 0.04 + (scenario.hoursExtraPenalty > 0 ? 0.02 : -0.02), 0.25, 0.72);
-  const simulatedMidpoint = clamp(actualMidpoint - scenario.teamGain * 0.14 - scenario.hoursExtraBenefit * 0.06, 0.18, 0.65);
-
-  const atual = logisticCurve(labels.length, 8.2, actualMidpoint, scenario.actualCompletionScale);
-  const simulado = logisticCurve(labels.length, 8.6, simulatedMidpoint, scenario.simulatedCompletionScale);
-
-  return { labels, referencia, atual, simulado };
+async function carregarProgramas(diretoriaId) {
+  const url  = diretoriaId ? `/api/programas?diretoriaId=${diretoriaId}` : "/api/programas";
+  const res  = await fetch(url, { headers: authHeaders() });
+  const data = await res.json();
+  const sel  = document.getElementById("filtro-programa");
+  sel.innerHTML = '<option value="">Programa</option>';
+  data.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.nome;
+    sel.appendChild(opt);
+  });
 }
 
-function polylinePoints(values, width, height, padding) {
-  const usableWidth = width - padding * 2;
-  const usableHeight = height - padding * 2;
+// ── Projetos ──────────────────────────────────────────────────────────────────
+async function carregarProjetos() {
+  const diretoria = document.getElementById("filtro-diretoria").value;
+  const programa  = document.getElementById("filtro-programa").value;
+  const busca     = document.getElementById("filtro-busca").value.trim();
+  const params    = new URLSearchParams();
+  if (diretoria) params.set("diretoriaId", diretoria);
+  if (programa)  params.set("programaId",  programa);
+  if (busca)     params.set("busca",        busca);
 
-  return values.map((value, index) => {
-    const x = padding + (usableWidth * index) / Math.max(1, values.length - 1);
-    const y = height - padding - value * usableHeight;
-    return `${x},${y}`;
-  }).join(" ");
-}
-
-function renderCurvaS(series) {
-  const width = 760;
-  const height = 320;
-  const padding = 36;
-  const leftAxis = 48;
-  const bottomAxis = 28;
-  const lineWidth = width - leftAxis - padding;
-  const chartHeight = height - padding - bottomAxis;
-  const startX = leftAxis;
-  const endX = width - padding;
-  const startY = padding;
-  const endY = height - bottomAxis;
-
-  const horizontalGrid = [0, 0.25, 0.5, 0.75, 1]
-    .map((step) => {
-      const y = endY - step * (chartHeight - startY + padding);
-      return `<line x1="${startX}" y1="${y}" x2="${endX}" y2="${y}" class="chart-grid" />`;
-    })
-    .join("");
-
-  const verticalGrid = series.labels
-    .map((_, index) => {
-      const x = startX + (lineWidth * index) / Math.max(1, series.labels.length - 1);
-      return `<line x1="${x}" y1="${startY}" x2="${x}" y2="${endY}" class="chart-grid chart-grid-vertical" />`;
-    })
-    .join("");
-
-  const yLabels = [0, 25, 50, 75, 100]
-    .map((step) => {
-      const y = endY - (step / 100) * (chartHeight - startY + padding);
-      return `<text x="10" y="${y + 4}" class="chart-axis-label">${step}%</text>`;
-    })
-    .join("");
-
-  const xLabels = series.labels
-    .map((label, index) => {
-      const x = startX + (lineWidth * index) / Math.max(1, series.labels.length - 1);
-      return `<text x="${x}" y="${height - 6}" text-anchor="middle" class="chart-axis-label">${label}</text>`;
-    })
-    .join("");
-
-  const lines = `
-    <polyline points="${polylinePoints(series.referencia, width, height, padding)}" class="chart-line chart-line-reference" />
-    <polyline points="${polylinePoints(series.atual, width, height, padding)}" class="chart-line chart-line-current" />
-    <polyline points="${polylinePoints(series.simulado, width, height, padding)}" class="chart-line chart-line-simulated" />
-  `;
-
-  curvaChart.innerHTML = `
-    <rect x="0" y="0" width="${width}" height="${height}" rx="22" class="chart-bg" />
-    ${horizontalGrid}
-    ${verticalGrid}
-    ${yLabels}
-    ${xLabels}
-    ${lines}
-  `;
-}
-
-function buildScenarioMetrics() {
-  const params = getScenarioInputs();
-  const totals = getDatasetTotals();
-  const prazoBase = 198;
-  const riskMap = { baixo: 0.02, medio: 0.05, alto: 0.09 };
-  const riskWeight = riskMap[params.riscoOperacional] ?? 0.05;
-  const teamGain = clamp((params.numeroEquipes - 10) / 18, -0.25, 0.35);
-  const hoursExtraPenalty = params.horasExtras ? 0.022 : 0;
-  const hoursExtraBenefit = params.horasExtras ? 0 : 0.055;
-  const prazoReductionRatio = clamp((params.numeroEquipes - 10) * 0.018 + hoursExtraBenefit - riskWeight * 0.2, -0.08, 0.24);
-  const novoPrazo = Math.max(90, Math.round(params.prazoDias * (1 - prazoReductionRatio)));
-  const multaImpact = totals.atual * (params.multaPercentual / 100) * clamp((params.prazoDias - novoPrazo) / params.prazoDias, 0.06, 0.4) * 0.18;
-  const efficiencyImpact = totals.atual * (0.035 + teamGain * 0.18 + hoursExtraBenefit * 0.24 - riskWeight * 0.08);
-  const scenarioCost = Math.max(0, totals.atual - efficiencyImpact + params.outorga + multaImpact + totals.atual * hoursExtraPenalty);
-  const economia = totals.atual - scenarioCost;
-  const actualCompletionScale = clamp(0.86 - riskWeight * 0.8, 0.55, 0.98);
-  const simulatedCompletionScale = clamp(actualCompletionScale + teamGain * 0.22 + hoursExtraBenefit * 0.16, 0.62, 1);
-  const aderenciaAtual = actualCompletionScale * 100;
-  const aderenciaSimulada = simulatedCompletionScale * 100;
-
-  return {
-    params,
-    totals,
-    scenarioCost,
-    economia,
-    novoPrazo,
-    aderenciaAtual,
-    aderenciaSimulada,
-    riskWeight,
-    teamGain,
-    hoursExtraPenalty,
-    hoursExtraBenefit,
-    actualCompletionScale,
-    simulatedCompletionScale
-  };
-}
-
-function updateDashboard() {
-  const scenario = buildScenarioMetrics();
-  const series = buildChartSeries(scenario);
-
-  kpiCenarioAtual.textContent = formatMillions(scenario.totals.atual);
-  kpiCenarioSimulado.textContent = formatMillions(scenario.scenarioCost);
-  kpiEconomia.textContent = formatMillions(Math.abs(scenario.economia));
-  kpiEconomia.parentElement.classList.toggle("metric-card-danger", scenario.economia < 0);
-  kpiEconomia.parentElement.classList.toggle("metric-card-success", scenario.economia >= 0);
-
-  kpiAderenciaAtual.textContent = formatPercent(scenario.aderenciaAtual);
-  kpiAderenciaSimulada.textContent = formatPercent(scenario.aderenciaSimulada);
-
-  resumoEquipes.textContent = String(scenario.params.numeroEquipes);
-  resumoPrazo.textContent = `${scenario.novoPrazo} dias`;
-  resumoHoras.textContent = scenario.params.horasExtras ? "Sim" : "Não";
-  resumoOutorga.textContent = formatCurrency(scenario.params.outorga);
-  resumoMulta.textContent = formatPercent(scenario.params.multaPercentual);
-  resumoRisco.textContent = scenario.params.riscoOperacional.charAt(0).toUpperCase() + scenario.params.riscoOperacional.slice(1);
-  resumoTotal.textContent = formatMillions(scenario.scenarioCost);
-
-  renderCurvaS(series);
-}
-
-function limparMensagem(el) {
-  el.className = "msg";
-  el.textContent = "";
-}
-
-function payloadFromForm() {
-  const data = new FormData(form);
-  return {
-    dataSimulacao: String(data.get("dataSimulacao") || "").trim() || undefined,
-    entregavel: String(data.get("entregavel") || "").trim() || undefined,
-    capexEstimadoAtual: data.get("capexEstimadoAtual") ? Number(data.get("capexEstimadoAtual")) : undefined,
-    capexEstimadoSim: data.get("capexEstimadoSim") ? Number(data.get("capexEstimadoSim")) : undefined,
-    anoContratualSim: String(data.get("anoContratualSim") || "").trim() || undefined,
-    anoRealSim: String(data.get("anoRealSim") || "").trim() || undefined,
-    pontoAtencao: String(data.get("pontoAtencao") || "").trim() || undefined,
-    contexto: String(data.get("contexto") || "").trim() || undefined
-  };
-}
-
-function preencherForm(registro) {
-  form.dataSimulacao.value = registro.dataSimulacao || "";
-  form.entregavel.value = registro.entregavel || "";
-  form.capexEstimadoAtual.value = registro.capexEstimadoAtual ?? "";
-  form.capexEstimadoSim.value = registro.capexEstimadoSim ?? "";
-  form.anoContratualSim.value = registro.anoContratualSim || "";
-  form.anoRealSim.value = registro.anoRealSim || "";
-  form.pontoAtencao.value = registro.pontoAtencao || "";
-  form.contexto.value = registro.contexto || "";
-}
-
-function resetForm() {
-  form.reset();
-  editandoId = null;
-  cancelarBtn.style.display = "none";
+  const res  = await fetch(`/api/projetos?${params}`, { headers: authHeaders() });
+  const data = await res.json();
+  projetos   = data.projetos || [];
+  renderTabela();
+  atualizarMatchList();
 }
 
 function renderTabela() {
-  tabelaBody.innerHTML = "";
-  kpiTotal.textContent = String(registros.length);
+  const tbody = document.getElementById("projetos-tbody");
+  document.getElementById("tabela-total").textContent = `${projetos.length} projeto(s)`;
+  tbody.innerHTML = "";
 
-  registros.forEach((registro) => {
-    const tr = document.createElement("tr");
+  if (projetos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="sim-empty-row">Nenhum projeto encontrado</td></tr>';
+    return;
+  }
+
+  projetos.forEach(p => {
+    const tr  = document.createElement("tr");
+    const ativo = projetoAtivo?.id === p.id;
+    if (ativo) tr.classList.add("sim-row-active");
     tr.innerHTML = `
-      <td>${registro.id}</td>
-      <td>${registro.usuario ?? ""}</td>
-      <td>${registro.entregavel ?? ""}</td>
-      <td>${Number(registro.capexEstimadoAtual || 0).toLocaleString("pt-BR")}</td>
-      <td>${Number(registro.capexEstimadoSim || 0).toLocaleString("pt-BR")}</td>
-      <td>
-        <button class="btn btn-secondary" data-acao="editar" data-id="${registro.id}">Editar</button>
-        <button class="btn" style="background:#fde8e8;color:#8f2424;border:1px solid #f3b6b6" data-acao="excluir" data-id="${registro.id}">Excluir</button>
-      </td>
+      <td class="sim-td-nome">${p.nome}</td>
+      <td>${p.diretoria}</td>
+      <td>${p.programa}</td>
+      <td>${p.escopo || "—"}</td>
+      <td>${fmtCapex(p.capexEstimado)}</td>
+      <td>${p.anoContratual || "—"}</td>
+      <td>${p.anoReal || "—"}</td>
+      <td><span class="sim-status sim-status-${(p.status || "").toLowerCase().replace(/\s/g, "-")}">${p.status || "—"}</span></td>
     `;
-    tabelaBody.appendChild(tr);
+    tr.style.cursor = "pointer";
+    tr.addEventListener("click", () => selecionarProjeto(p));
+    tbody.appendChild(tr);
   });
-
-  updateDashboard();
 }
 
-async function carregarRegistros() {
-  const response = await fetch("/api/simulador/registros", {
-    headers: getAuthHeaders()
-  });
-  const data = await response.json();
-  registros = data.registros || [];
+function selecionarProjeto(p) {
+  projetoAtivo = p;
+  simAtiva     = null;
+
+  document.getElementById("sim-projeto-id").value   = p.id;
+  document.getElementById("sim-id").value           = "";
+  document.getElementById("dados-atual-placeholder").hidden = true;
+  document.getElementById("dados-atual-content").hidden     = false;
+  document.getElementById("atual-capex").textContent         = fmtCapex(p.capexEstimado);
+  document.getElementById("atual-ano-contratual").textContent = p.anoContratual || "—";
+  document.getElementById("atual-ano-real").textContent       = p.anoReal || "—";
+  document.getElementById("atual-diretoria").textContent      = p.diretoria;
+  document.getElementById("atual-programa").textContent       = p.programa;
+  document.getElementById("atual-escopo").textContent         = p.escopo || "—";
+
+  document.getElementById("btn-salvar").disabled = false;
+  document.getElementById("btn-apagar").hidden   = true;
+
+  limparFormSim();
   renderTabela();
 }
 
-form.addEventListener("submit", async (event) => {
+// ── Busca sidebar ─────────────────────────────────────────────────────────────
+function atualizarMatchList() {
+  const busca = document.getElementById("busca-sidebar").value.trim().toLowerCase();
+  const lista = document.getElementById("lista-matches");
+  lista.innerHTML = "";
+
+  if (!busca) { lista.hidden = true; return; }
+
+  const matches = projetos.filter(p => p.nome.toLowerCase().includes(busca)).slice(0, 8);
+  if (matches.length === 0) { lista.hidden = true; return; }
+
+  matches.forEach(p => {
+    const li = document.createElement("li");
+    li.className = "sim-match-item";
+    li.textContent = p.nome;
+    li.addEventListener("click", () => {
+      selecionarProjeto(p);
+      document.getElementById("busca-sidebar").value = p.nome;
+      lista.hidden = true;
+    });
+    lista.appendChild(li);
+  });
+  lista.hidden = false;
+}
+
+// ── Simulações ────────────────────────────────────────────────────────────────
+async function carregarSimulacoes() {
+  const res  = await fetch("/api/simulacoes", { headers: authHeaders() });
+  const data = await res.json();
+  simulacoes = data.simulacoes || [];
+  renderSimulacoes();
+}
+
+function renderSimulacoes() {
+  const tbody = document.getElementById("simulacoes-tbody");
+  tbody.innerHTML = "";
+
+  if (simulacoes.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="12" class="sim-empty-row">Não encontramos nada para mostrar aqui</td></tr>';
+    return;
+  }
+
+  simulacoes.forEach(s => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="sim-td-nome">${s.nomeProjeto}</td>
+      <td>${s.diretoria}</td>
+      <td>${s.programa}</td>
+      <td>${fmtCapex(s.capexEstimadoAtual)}</td>
+      <td>${fmtCapex(s.capexEstimadoSim)}</td>
+      <td>${s.anoContratualAtual || "—"}</td>
+      <td>${s.anoContratualSim || "—"}</td>
+      <td>${s.anoRealAtual || "—"}</td>
+      <td>${s.anoRealSim || "—"}</td>
+      <td class="sim-td-contexto">${s.contexto || "—"}</td>
+      <td>${s.dataSimulacao ? new Date(s.dataSimulacao).toLocaleDateString("pt-BR") : "—"}</td>
+      <td>
+        <button class="sim-btn sim-btn-sm" data-acao="editar" data-id="${s.id}">Editar</button>
+        <button class="sim-btn sim-btn-danger sim-btn-sm" data-acao="excluir" data-id="${s.id}">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Form de simulação ─────────────────────────────────────────────────────────
+function limparFormSim() {
+  document.getElementById("sim-capex").value          = "";
+  document.getElementById("sim-ano-contratual").value = "";
+  document.getElementById("sim-ano-real").value       = "";
+  document.getElementById("sim-contexto").value       = "";
+  document.getElementById("sim-ponto-atencao").value  = "";
+  document.getElementById("sim-form-msg").textContent  = "";
+  document.getElementById("sim-form-msg").className    = "sim-msg";
+  document.getElementById("sim-id").value              = "";
+  document.getElementById("btn-apagar").hidden          = true;
+  simAtiva = null;
+}
+
+function mostrarMsgForm(texto, tipo) {
+  const el = document.getElementById("sim-form-msg");
+  el.textContent = texto;
+  el.className   = `sim-msg sim-msg-${tipo}`;
+}
+
+function mostrarMsgImport(texto, tipo) {
+  const el = document.getElementById("sim-import-msg");
+  el.textContent = texto;
+  el.className   = `sim-msg sim-msg-${tipo}`;
+}
+
+document.getElementById("sim-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  limparMensagem(formMsg);
+  const projetoId = Number(document.getElementById("sim-projeto-id").value);
+  if (!projetoId) { mostrarMsgForm("Selecione um projeto antes de salvar.", "error"); return; }
+
+  const simId     = document.getElementById("sim-id").value;
+  const capex     = document.getElementById("sim-capex").value;
+  const payload   = {
+    projetoId,
+    capexEstimadoSim:  capex ? Number(capex) : undefined,
+    anoContratualSim:  document.getElementById("sim-ano-contratual").value.trim() || undefined,
+    anoRealSim:        document.getElementById("sim-ano-real").value.trim()       || undefined,
+    contexto:          document.getElementById("sim-contexto").value.trim()       || undefined,
+    pontoAtencao:      document.getElementById("sim-ponto-atencao").value.trim()  || undefined
+  };
+
+  const method = simId ? "PUT" : "POST";
+  const url    = simId ? `/api/simulacoes/${simId}` : "/api/simulacoes";
+
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    mostrarMsgForm(err.error || "Falha ao salvar.", "error");
+    return;
+  }
+
+  mostrarMsgForm(simId ? "Simulação atualizada." : "Simulação salva.", "ok");
+  limparFormSim();
+  await carregarSimulacoes();
+});
+
+document.getElementById("btn-limpar-form").addEventListener("click", () => {
+  limparFormSim();
+  document.getElementById("btn-salvar").disabled = !projetoAtivo;
+});
+
+document.getElementById("btn-importar-excel").addEventListener("click", async () => {
+  const input = document.getElementById("sim-excel-input");
+  const file = input.files?.[0];
+
+  if (!file) {
+    mostrarMsgImport("Selecione um arquivo Excel para importar.", "error");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("arquivo", file);
+
+  mostrarMsgImport("Importando planilha...", "ok");
 
   try {
-    const payload = payloadFromForm();
-
-    const response = await fetch(editandoId ? `/api/simulador/registros/${editandoId}` : "/api/simulador/registros", {
-      method: editandoId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-      body: JSON.stringify(payload)
+    const res = await fetch("/api/simulador/upload", {
+      method: "POST",
+      headers: authHeaders(),
+      body: formData
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Falha ao salvar registro.");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      mostrarMsgImport(data.error || "Falha ao importar a planilha.", "error");
+      return;
     }
 
-    exibirMensagem(formMsg, editandoId ? "Registro atualizado com sucesso." : "Registro criado com sucesso.", "ok");
-    resetForm();
-    await carregarRegistros();
+    mostrarMsgImport(`${data.totalImportado ?? 0} simulação(ões) importada(s) com sucesso.`, "ok");
+    input.value = "";
+    await carregarSimulacoes();
   } catch (error) {
-    exibirMensagem(formMsg, error.message || "Erro inesperado.", "error");
+    mostrarMsgImport("Falha ao enviar o arquivo.", "error");
   }
 });
 
-cenarioForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  updateDashboard();
-});
+document.getElementById("btn-apagar").addEventListener("click", async () => {
+  const simId = document.getElementById("sim-id").value;
+  if (!simId || !confirm("Confirmar exclusão da simulação?")) return;
 
-cenarioForm.addEventListener("input", () => {
-  updateDashboard();
-});
-
-horasExtrasToggle.addEventListener("click", (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLButtonElement)) {
-    return;
+  const res = await fetch(`/api/simulacoes/${simId}`, { method: "DELETE", headers: authHeaders() });
+  if (res.ok) {
+    mostrarMsgForm("Simulação excluída.", "ok");
+    limparFormSim();
+    await carregarSimulacoes();
   }
-
-  horasExtrasAtivo = target.dataset.value || "sim";
-  Array.from(horasExtrasToggle.querySelectorAll(".segmented-btn")).forEach((button) => {
-    button.classList.toggle("active", button === target);
-  });
-  updateDashboard();
 });
 
-cancelarBtn.addEventListener("click", () => {
-  resetForm();
-  limparMensagem(formMsg);
-});
+// ── Ações da tabela de simulações ─────────────────────────────────────────────
+document.getElementById("simulacoes-tbody").addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-acao]");
+  if (!btn) return;
+  const id   = btn.dataset.id;
+  const acao = btn.dataset.acao;
 
-tabelaBody.addEventListener("click", async (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLButtonElement)) {
-    return;
-  }
-
-  const id = Number(target.dataset.id || 0);
-  const acao = target.dataset.acao;
-  if (!id || !acao) {
+  if (acao === "excluir") {
+    if (!confirm("Confirmar exclusão?")) return;
+    fetch(`/api/simulacoes/${id}`, { method: "DELETE", headers: authHeaders() })
+      .then(() => carregarSimulacoes());
     return;
   }
 
   if (acao === "editar") {
-    const registro = registros.find((item) => item.id === id);
-    if (!registro) {
-      return;
-    }
+    const s = simulacoes.find(x => String(x.id) === id);
+    if (!s) return;
 
-    preencherForm(registro);
-    editandoId = id;
-    cancelarBtn.style.display = "inline-flex";
+    const projeto = projetos.find(p => p.id === s.projetoId);
+    if (projeto) selecionarProjeto(projeto);
+
+    document.getElementById("sim-id").value                = s.id;
+    document.getElementById("sim-capex").value             = s.capexEstimadoSim || "";
+    document.getElementById("sim-ano-contratual").value    = s.anoContratualSim || "";
+    document.getElementById("sim-ano-real").value          = s.anoRealSim || "";
+    document.getElementById("sim-contexto").value          = s.contexto || "";
+    document.getElementById("sim-ponto-atencao").value     = s.pontoAtencao || "";
+    document.getElementById("btn-apagar").hidden            = false;
+    simAtiva = s;
+
     window.scrollTo({ top: 0, behavior: "smooth" });
-    return;
-  }
-
-  if (acao === "excluir") {
-    if (!confirm("Confirma exclusão do registro?")) {
-      return;
-    }
-
-    const response = await fetch(`/api/simulador/registros/${id}`, {
-      method: "DELETE",
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) {
-      exibirMensagem(formMsg, "Falha ao excluir registro.", "error");
-      return;
-    }
-
-    exibirMensagem(formMsg, "Registro excluído.", "ok");
-    await carregarRegistros();
   }
 });
 
-uploadForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  limparMensagem(uploadMsg);
+// ── Filtros ───────────────────────────────────────────────────────────────────
+document.getElementById("filtro-diretoria").addEventListener("change", async (e) => {
+  await carregarProgramas(e.target.value || undefined);
+  await carregarProjetos();
+});
+document.getElementById("filtro-programa").addEventListener("change", carregarProjetos);
+document.getElementById("filtro-busca").addEventListener("input", carregarProjetos);
 
-  try {
-    const formData = new FormData(uploadForm);
-    const response = await fetch("/api/simulador/upload", {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: formData
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || "Falha na importação.");
-    }
-
-    exibirMensagem(uploadMsg, `Importação concluída: ${data.totalImportado} registro(s).`, "ok");
-    uploadForm.reset();
-    await carregarRegistros();
-  } catch (error) {
-    exibirMensagem(uploadMsg, error.message || "Erro inesperado.", "error");
-  }
+document.getElementById("btn-limpar-filtros").addEventListener("click", async () => {
+  document.getElementById("filtro-diretoria").value = "";
+  document.getElementById("filtro-programa").value  = "";
+  document.getElementById("filtro-busca").value     = "";
+  await carregarProgramas();
+  await carregarProjetos();
 });
 
-gerarPdfBtn.addEventListener("click", async () => {
-  const linhas = registros
-    .map(
-      (r) =>
-        `<tr><td>${r.usuario ?? ""}</td><td>${r.entregavel ?? ""}</td><td>${r.capexEstimadoAtual ?? ""}</td><td>${r.capexEstimadoSim ?? ""}</td></tr>`
-    )
-    .join("");
+document.getElementById("busca-sidebar").addEventListener("input", atualizarMatchList);
+document.getElementById("btn-busca").addEventListener("click", atualizarMatchList);
 
-  const html = `
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          body { font-family: Arial, sans-serif; padding: 24px; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #ccc; padding: 6px; font-size: 12px; }
-          h1 { color: #0f5a5f; }
-        </style>
-      </head>
-      <body>
-        <h1>Relatório do Simulador</h1>
-        <p>Total de registros: ${registros.length}</p>
-        <table>
-          <thead>
-            <tr><th>Usuário</th><th>Entregável</th><th>Capex Atual</th><th>Capex Sim</th></tr>
-          </thead>
-          <tbody>${linhas}</tbody>
-        </table>
-      </body>
-    </html>
-  `;
-
-  const response = await fetch("/api/relatorios/gerar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ html, fileName: "relatorio_simulador.pdf" })
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    exibirMensagem(formMsg, data.error || "Falha ao gerar relatório.", "error");
-    return;
-  }
-
-  window.open(data.downloadPath, "_blank");
-});
-
-carregarRegistros().catch(() => {
-  exibirMensagem(formMsg, "Falha ao carregar registros iniciais.", "error");
-  updateDashboard();
-});
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  await carregarDiretorias();
+  await carregarProgramas();
+  await carregarProjetos();
+  await carregarSimulacoes();
+})();

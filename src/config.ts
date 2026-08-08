@@ -23,10 +23,7 @@ export const config = {
     clientId: process.env.AZURE_CLIENT_ID ?? "",
     clientSecret: process.env.AZURE_CLIENT_SECRET ?? ""
   },
-  sharepoint: {
-    siteId: process.env.SP_SITE_ID ?? "",
-    driveId: process.env.SP_DRIVE_ID ?? "",
-    listIdSimulador: process.env.SP_LIST_ID_SIMULADOR ?? "",
-    fileIdPlanilhaBase: process.env.SP_FILE_ID_PLANILHA_BASE ?? ""
+  importacaoExcel: {
+    templateFileName: process.env.EXCEL_TEMPLATE_FILE_NAME ?? "template_simulador.xlsx"
   }
 };

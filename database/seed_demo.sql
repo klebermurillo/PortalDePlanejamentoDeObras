@@ -9,23 +9,29 @@ USE portal_obras;
 -- Diretorias
 -- ------------------------------------------------------------
 INSERT INTO diretorias (nome) VALUES
-  ('Malha Paulista'),
-  ('Engenharia'),
-  ('Operações'),
-  ('Expansão'),
-  ('Via Permanente');
+  ('Diretoria de Engenharia'),
+  ('Diretoria de Implantação'),
+  ('Diretoria de Expansão'),
+  ('Diretoria de Operações'),
+  ('Diretoria de Infraestrutura'),
+  ('Diretoria de Via Permanente'),
+  ('Diretoria de Projetos'),
+  ('Diretoria de Obras'),
+  ('Diretoria de Investimentos'),
+  ('Diretoria de Manutenção'),
+  ('Diretoria de Segurança Operacional');
 
 -- ------------------------------------------------------------
 -- Programas (vinculados a diretorias)
 -- ------------------------------------------------------------
 INSERT INTO programas (nome, diretoria_id) VALUES
-  ('Programa de Duplicação',                (SELECT id FROM diretorias WHERE nome = 'Malha Paulista')),
-  ('Programa de Segurança Ferroviária',     (SELECT id FROM diretorias WHERE nome = 'Malha Paulista')),
-  ('Programa de Investimentos Contratuais', (SELECT id FROM diretorias WHERE nome = 'Malha Paulista')),
-  ('Programa de Modernização de Oficinas',  (SELECT id FROM diretorias WHERE nome = 'Engenharia')),
-  ('Programa de Expansão de Pátios',        (SELECT id FROM diretorias WHERE nome = 'Expansão')),
-  ('Programa de Renovação de Via',          (SELECT id FROM diretorias WHERE nome = 'Via Permanente')),
-  ('Programa de Sinalização',              (SELECT id FROM diretorias WHERE nome = 'Operações'));
+  ('Programa de Duplicação',                (SELECT id FROM diretorias WHERE nome = 'Diretoria de Implantação')),
+  ('Programa de Segurança Ferroviária',     (SELECT id FROM diretorias WHERE nome = 'Diretoria de Segurança Operacional')),
+  ('Programa de Investimentos Contratuais', (SELECT id FROM diretorias WHERE nome = 'Diretoria de Investimentos')),
+  ('Programa de Modernização de Oficinas',  (SELECT id FROM diretorias WHERE nome = 'Diretoria de Engenharia')),
+  ('Programa de Expansão de Pátios',        (SELECT id FROM diretorias WHERE nome = 'Diretoria de Expansão')),
+  ('Programa de Renovação de Via',          (SELECT id FROM diretorias WHERE nome = 'Diretoria de Via Permanente')),
+  ('Programa de Sinalização',               (SELECT id FROM diretorias WHERE nome = 'Diretoria de Operações'));
 
 -- ------------------------------------------------------------
 -- Projetos (base oficial, somente leitura nas simulacoes)

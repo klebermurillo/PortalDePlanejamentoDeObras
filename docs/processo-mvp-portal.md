@@ -6,7 +6,7 @@
 - Simulador de Cenarios
 - Tarifador
 
-2. Operacao local sem PowerApps/Power Automate/SharePoint.
+2. Operacao local sem PowerApps/Power Automate e sem integração com SharePoint.
 
 3. Dados mantidos em SQLite local.
 
@@ -36,4 +36,4 @@
 ## Observacoes
 
 1. O backend atual ja possui API para o Simulador e servico de PDF.
-2. Integracoes com Microsoft Graph permanecem desacopladas para serem ativadas depois.
+2. Integrações futuras permanecem desacopladas e podem ser adicionadas sem depender de SharePoint.

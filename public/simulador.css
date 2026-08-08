@@ -1,0 +1,508 @@
+/* ── Variáveis de tema escuro para o simulador ─────────────────────────────── */
+:root {
+  --sim-bg:        #071529;
+  --sim-surface:   #0c1f3a;
+  --sim-surface2:  #122540;
+  --sim-border:    #1d3557;
+  --sim-ink:       #e8eef4;
+  --sim-muted:     #8ba3bb;
+  --sim-accent:    #2196f3;
+  --sim-orange:    #f97316;
+  --sim-ok:        #10b981;
+  --sim-danger:    #ef4444;
+}
+
+[data-theme="light"] {
+  --sim-bg:       #f0f4f8;
+  --sim-surface:  #ffffff;
+  --sim-surface2: #f5f8fc;
+  --sim-border:   #d0dce8;
+  --sim-ink:      #1a2d45;
+  --sim-muted:    #5a7a9a;
+}
+
+/* ── Reset de layout quando em modo simulador ──────────────────────────────── */
+body {
+  background: var(--sim-bg) !important;
+  color: var(--sim-ink) !important;
+  margin: 0;
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.sim-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 52px;
+  background: var(--sim-surface2);
+  border-bottom: 1px solid var(--sim-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.sim-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.sim-brand {
+  font-size: 1.4rem;
+  text-decoration: none;
+  color: var(--sim-accent);
+  line-height: 1;
+}
+
+.sim-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--sim-muted);
+  white-space: nowrap;
+}
+
+.sim-breadcrumb a {
+  color: var(--sim-accent);
+  text-decoration: none;
+}
+
+.sim-header-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sim-select {
+  background: var(--sim-surface);
+  border: 1px solid var(--sim-border);
+  color: var(--sim-ink);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+  height: 32px;
+}
+
+.sim-search-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--sim-surface);
+  border: 1px solid var(--sim-border);
+  color: var(--sim-ink);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+  height: 32px;
+}
+
+.sim-btn-ghost {
+  border: 1px solid var(--sim-border);
+  background: transparent;
+  color: var(--sim-muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sim-header-right {
+  flex-shrink: 0;
+}
+
+/* ── Layout principal ──────────────────────────────────────────────────────── */
+.sim-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 0;
+  height: calc(100vh - 52px - 2px);
+  overflow: hidden;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────────────── */
+.sim-sidebar {
+  background: var(--sim-surface2);
+  border-right: 1px solid var(--sim-border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sim-sidebar-search {
+  display: flex;
+  gap: 6px;
+  padding: 10px;
+  border-bottom: 1px solid var(--sim-border);
+}
+
+.sim-sidebar-search input {
+  flex: 1;
+  background: var(--sim-surface);
+  border: 1px solid var(--sim-border);
+  color: var(--sim-ink);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.sim-btn-icon {
+  background: var(--sim-accent);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* ── Match list ────────────────────────────────────────────────────────────── */
+.sim-match-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--sim-border);
+  background: var(--sim-surface);
+}
+
+.sim-match-item {
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 100ms;
+}
+
+.sim-match-item:hover {
+  background: var(--sim-surface2);
+  border-left-color: var(--sim-accent);
+}
+
+/* ── Blocos de dados ───────────────────────────────────────────────────────── */
+.sim-dados-block {
+  border-bottom: 1px solid var(--sim-border);
+}
+
+.sim-dados-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 9px 12px 6px;
+  font-size: 0.8rem;
+}
+
+.sim-dados-label {
+  color: var(--sim-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sim-dados-tipo {
+  font-weight: 700;
+  color: var(--sim-ink);
+}
+
+.sim-dados-tipo-sim {
+  color: var(--sim-orange);
+}
+
+.sim-placeholder {
+  padding: 12px;
+  color: var(--sim-muted);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
+.sim-field-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 5px 12px;
+  font-size: 0.84rem;
+  border-top: 1px solid var(--sim-border);
+}
+
+.sim-field-row span {
+  color: var(--sim-muted);
+}
+
+.sim-field-row strong {
+  font-weight: 600;
+  text-align: right;
+  max-width: 55%;
+  word-break: break-word;
+}
+
+/* ── Form de simulação ─────────────────────────────────────────────────────── */
+.sim-form-field {
+  padding: 6px 12px;
+}
+
+.sim-form-field label {
+  display: block;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sim-muted);
+  margin-bottom: 4px;
+}
+
+.sim-form-field input,
+.sim-form-field textarea {
+  width: 100%;
+  background: var(--sim-surface);
+  border: 1px solid var(--sim-border);
+  color: var(--sim-ink);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 0.84rem;
+  box-sizing: border-box;
+}
+
+.sim-form-field textarea {
+  resize: vertical;
+  min-height: 56px;
+}
+
+.sim-form-actions {
+  padding: 10px 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sim-btn {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sim-btn-salvar {
+  background: var(--sim-accent);
+  color: #fff;
+  border-color: #1565c0;
+}
+
+.sim-btn-salvar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sim-btn-danger {
+  background: color-mix(in srgb, var(--sim-danger) 16%, var(--sim-surface));
+  color: var(--sim-danger);
+  border-color: color-mix(in srgb, var(--sim-danger) 40%, var(--sim-border));
+}
+
+.sim-btn-sm {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+}
+
+.sim-msg {
+  padding: 4px 12px 8px;
+  font-size: 0.82rem;
+}
+
+.sim-msg-ok    { color: var(--sim-ok); }
+.sim-msg-error { color: var(--sim-danger); }
+
+/* ── Importação Excel ────────────────────────────────────────────────────── */
+.sim-import-block {
+  border-top: 1px solid var(--sim-border);
+  background: color-mix(in srgb, var(--sim-surface) 70%, transparent);
+}
+
+.sim-import-content {
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim-import-content p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--sim-muted);
+  line-height: 1.4;
+}
+
+.sim-import-content input[type="file"] {
+  color: var(--sim-ink);
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.sim-link {
+  color: var(--sim-accent);
+  text-decoration: none;
+  font-size: 0.8rem;
+}
+
+.sim-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Tabela de projetos ────────────────────────────────────────────────────── */
+.sim-table-section {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--sim-bg);
+}
+
+.sim-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--sim-border);
+  flex-shrink: 0;
+}
+
+.sim-table-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--sim-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sim-table-count {
+  font-size: 0.78rem;
+  color: var(--sim-muted);
+}
+
+.sim-table-section .table-wrap {
+  flex: 1;
+  overflow: auto;
+  margin: 0;
+}
+
+.sim-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+}
+
+.sim-table th {
+  background: var(--sim-surface2);
+  color: var(--sim-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--sim-border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+
+.sim-table td {
+  padding: 8px 10px;
+  font-size: 0.84rem;
+  border-bottom: 1px solid var(--sim-border);
+  color: var(--sim-ink);
+  vertical-align: top;
+}
+
+.sim-table tbody tr:hover { background: var(--sim-surface2); }
+.sim-row-active { background: color-mix(in srgb, var(--sim-accent) 14%, var(--sim-bg)) !important; }
+
+.sim-td-nome {
+  font-weight: 600;
+  min-width: 200px;
+}
+
+.sim-td-contexto {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sim-empty-row {
+  text-align: center;
+  color: var(--sim-muted);
+  padding: 28px !important;
+  font-style: italic;
+}
+
+/* ── Status badges ─────────────────────────────────────────────────────────── */
+.sim-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--sim-muted) 18%, var(--sim-bg));
+  color: var(--sim-muted);
+}
+
+.sim-status-em-execução  { background: color-mix(in srgb, var(--sim-ok) 18%, var(--sim-bg));     color: var(--sim-ok); }
+.sim-status-planejado     { background: color-mix(in srgb, var(--sim-accent) 18%, var(--sim-bg)); color: var(--sim-accent); }
+.sim-status-licitação     { background: color-mix(in srgb, #fbbf24 18%, var(--sim-bg));           color: #fbbf24; }
+
+/* ── Seção de simulações salvas ────────────────────────────────────────────── */
+.sim-saved-section {
+  border-top: 2px solid var(--sim-border);
+  background: var(--sim-surface2);
+  max-height: 320px;
+  overflow: auto;
+  padding: 0;
+}
+
+.sim-saved-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--sim-border);
+}
+
+.sim-saved-header h3 {
+  margin: 4px 0 0;
+  font-size: 0.92rem;
+}
+
+.sim-saved-table th { position: static; }
+
+.panel-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sim-accent);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sim-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: auto;
+  }
+
+  .sim-header-filters {
+    display: none;
+  }
+}
