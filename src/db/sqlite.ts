@@ -25,7 +25,7 @@ export async function getDb(): Promise<Database> {
       await db.exec(`
         CREATE TABLE IF NOT EXISTS simulador_registros (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          id_primavera TEXT NOT NULL,
+          id_projeto TEXT NOT NULL,
           usuario TEXT NOT NULL,
           data_simulacao TEXT,
           entregavel TEXT,
@@ -40,7 +40,7 @@ export async function getDb(): Promise<Database> {
         );
       `);
 
-      await db.exec("CREATE INDEX IF NOT EXISTS idx_simulador_id_primavera ON simulador_registros(id_primavera);");
+      await db.exec("CREATE INDEX IF NOT EXISTS idx_simulador_id_projeto ON simulador_registros(id_projeto);");
 
       return db;
     })();

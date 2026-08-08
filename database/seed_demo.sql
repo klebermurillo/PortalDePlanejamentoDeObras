@@ -6,7 +6,7 @@
 USE portal_obras;
 
 INSERT INTO simulador_registros
-  (id_primavera, usuario, data_simulacao, entregavel, capex_estimado_atual, capex_estimado_sim,
+  (id_projeto, usuario, data_simulacao, entregavel, capex_estimado_atual, capex_estimado_sim,
    ano_contratual_sim, ano_real_sim, ponto_atencao, contexto)
 VALUES
   ('SIM-A001', 'kleber.murillo', '2026-01-10', 'Duplicação de Via - Trecho SP-01',   48500000.00, 51200000.00, '2027', '2028', 'Licença ambiental pendente',          'Dependência de desapropriação de área rural na faixa de domínio'),

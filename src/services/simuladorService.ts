@@ -5,7 +5,7 @@ import { importarDadosDeArquivoExcel } from "./excelImportService";
 
 export type SimuladorRegistro = {
   id: number;
-  idPrimavera: string;
+  idProjeto: string;
   usuario: string;
   dataSimulacao?: string;
   entregavel?: string;
@@ -20,7 +20,7 @@ export type SimuladorRegistro = {
 };
 
 export type NovoRegistroInput = {
-  idPrimavera?: string;
+  idProjeto?: string;
   usuario?: string;
   dataSimulacao?: string;
   entregavel?: string;
@@ -38,7 +38,7 @@ type ListarRegistrosFiltro = {
 
 type DbRegistro = {
   id: number;
-  id_primavera: string;
+  id_projeto: string;
   usuario: string;
   data_simulacao: string | null;
   entregavel: string | null;
@@ -55,7 +55,7 @@ type DbRegistro = {
 function mapDbRegistro(registro: DbRegistro): SimuladorRegistro {
   return {
     id: registro.id,
-    idPrimavera: registro.id_primavera,
+    idProjeto: registro.id_projeto,
     usuario: registro.usuario,
     dataSimulacao: registro.data_simulacao ?? undefined,
     entregavel: registro.entregavel ?? undefined,
@@ -84,16 +84,16 @@ export async function buscarRegistroSimuladorPorId(id: number): Promise<Simulado
 }
 
 export async function criarRegistroSimulador(input: NovoRegistroInput): Promise<SimuladorRegistro> {
-  const idPrimaveraInterno = (input.idPrimavera ?? "").trim() || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
+  const idProjetoInterno = (input.idProjeto ?? "").trim() || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
   const usuarioInterno = (input.usuario ?? "").trim() || "usuario_demo";
 
   const { insertId } = await execute(
     `INSERT INTO simulador_registros
-      (id_primavera, usuario, data_simulacao, entregavel, capex_estimado_atual,
+      (id_projeto, usuario, data_simulacao, entregavel, capex_estimado_atual,
        capex_estimado_sim, ano_contratual_sim, ano_real_sim, ponto_atencao, contexto)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      idPrimaveraInterno, usuarioInterno,
+      idProjetoInterno, usuarioInterno,
       input.dataSimulacao ?? null, input.entregavel ?? null,
       input.capexEstimadoAtual ?? null, input.capexEstimadoSim ?? null,
       input.anoContratualSim ?? null, input.anoRealSim ?? null,
@@ -110,17 +110,17 @@ export async function atualizarRegistroSimulador(id: number, input: NovoRegistro
   const existing = await queryOne<DbRegistro>("SELECT * FROM simulador_registros WHERE id = ?", [id]);
   if (!existing) return null;
 
-  const idPrimaveraInterno = (input.idPrimavera ?? "").trim() || existing.id_primavera || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
+  const idProjetoInterno = (input.idProjeto ?? "").trim() || existing.id_projeto || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
   const usuarioInterno = (input.usuario ?? "").trim() || existing.usuario || "usuario_demo";
 
   await execute(
     `UPDATE simulador_registros
-     SET id_primavera = ?, usuario = ?, data_simulacao = ?, entregavel = ?,
+     SET id_projeto = ?, usuario = ?, data_simulacao = ?, entregavel = ?,
          capex_estimado_atual = ?, capex_estimado_sim = ?,
          ano_contratual_sim = ?, ano_real_sim = ?, ponto_atencao = ?, contexto = ?
      WHERE id = ?`,
     [
-      idPrimaveraInterno, usuarioInterno,
+      idProjetoInterno, usuarioInterno,
       input.dataSimulacao ?? null, input.entregavel ?? null,
       input.capexEstimadoAtual ?? null, input.capexEstimadoSim ?? null,
       input.anoContratualSim ?? null, input.anoRealSim ?? null,
@@ -150,11 +150,11 @@ export async function importarExcelParaSimulador(fileBuffer: Uint8Array, usuario
     for (const registro of registros) {
       await conn.execute(
         `INSERT INTO simulador_registros
-          (id_primavera, usuario, data_simulacao, entregavel, capex_estimado_atual,
+          (id_projeto, usuario, data_simulacao, entregavel, capex_estimado_atual,
            capex_estimado_sim, ano_contratual_sim, ano_real_sim, ponto_atencao, contexto)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          registro.idPrimavera, registro.usuario,
+          registro.idProjeto, registro.usuario,
           registro.dataSimulacao ?? null, registro.entregavel ?? null,
           registro.capexEstimadoAtual ?? null, registro.capexEstimadoSim ?? null,
           registro.anoContratualSim ?? null, registro.anoRealSim ?? null,

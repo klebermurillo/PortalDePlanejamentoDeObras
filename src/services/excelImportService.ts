@@ -75,8 +75,8 @@ export async function importarDadosDeArquivoExcel(fileBuffer: Uint8Array, usuari
       return;
     }
 
-    const idPrimaveraRaw = String(getCell(row, "ID PRIMAVERA") ?? "").trim();
-    const idPrimavera = idPrimaveraRaw || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
+    const idProjetoRaw = String(getCell(row, "ID PROJETO") ?? "").trim();
+    const idProjeto = idProjetoRaw || `SIM-${randomUUID().slice(0, 8).toUpperCase()}`;
 
     const rowHasData = [
       getCell(row, "DATA SIMULACAO"),
@@ -89,12 +89,12 @@ export async function importarDadosDeArquivoExcel(fileBuffer: Uint8Array, usuari
       getCell(row, "CONTEXTO")
     ].some(hasMeaningfulValue);
 
-    if (!rowHasData && !idPrimaveraRaw) {
+    if (!rowHasData && !idProjetoRaw) {
       return;
     }
 
     result.push({
-      idPrimavera,
+      idProjeto,
       usuario,
       dataSimulacao: toDateStringFromExcelValue(getCell(row, "DATA SIMULACAO")),
       entregavel: String(getCell(row, "ENTREGAVEL") ?? "").trim() || undefined,

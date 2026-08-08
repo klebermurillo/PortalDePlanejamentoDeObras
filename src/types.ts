@@ -1,5 +1,5 @@
 export type RegistroSimulador = {
-  idPrimavera: string;
+  idProjeto: string;
   usuario: string;
   dataSimulacao?: string;
   entregavel?: string;

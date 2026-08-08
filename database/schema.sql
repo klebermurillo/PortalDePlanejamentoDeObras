@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS simulador_registros (
   id                    INT AUTO_INCREMENT PRIMARY KEY,
-  id_primavera          VARCHAR(30)     NOT NULL,
+  id_projeto            VARCHAR(30)     NOT NULL,
   usuario               VARCHAR(120)    NOT NULL,
   data_simulacao        DATE            NULL,
   entregavel            VARCHAR(255)    NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS simulador_registros (
   contexto              TEXT            NULL,
   created_at            DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at            DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_simulador_id_primavera (id_primavera),
+  INDEX idx_simulador_id_projeto (id_projeto),
   INDEX idx_simulador_usuario      (usuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
