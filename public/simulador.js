@@ -661,8 +661,15 @@ function setCurvaTab(mode) {
 
   tabPercentual.classList.toggle("sim-curva-tab-active", showPercentual);
   tabCapex.classList.toggle("sim-curva-tab-active", !showPercentual);
+  tabPercentual.setAttribute("aria-selected", String(showPercentual));
+  tabCapex.setAttribute("aria-selected", String(!showPercentual));
+
   curvaPercentual.hidden = !showPercentual;
   curvaCapex.hidden = showPercentual;
+
+  // Fallback visual in case global SVG display rules override hidden in some browsers.
+  curvaPercentual.style.display = showPercentual ? "block" : "none";
+  curvaCapex.style.display = showPercentual ? "none" : "block";
 }
 
 function aplicarCenarioSimulacao() {

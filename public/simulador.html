@@ -109,6 +109,7 @@
             <span class="sim-dados-label">Dados</span>
             <span class="sim-dados-tipo sim-dados-tipo-sim">Simulação</span>
           </div>
+          <p class="sim-flow-hint">Esta área lateral salva e edita simulações. Para ver impacto no gráfico, use os controles da seção Curva S e clique em Aplicar cenário.</p>
           <form id="sim-form">
             <input type="hidden" id="sim-projeto-id" />
             <input type="hidden" id="sim-id" />
@@ -165,6 +166,11 @@
               <h3>Curva S e Impacto Financeiro</h3>
             </div>
             <a class="sim-link" href="/api/simulador/template" target="_blank" rel="noreferrer">Baixar template Excel</a>
+          </div>
+
+          <div class="sim-workflow-guide" role="note" aria-label="Fluxo de simulação">
+            <span class="sim-guide-step"><strong>1.</strong> Selecione obra, ano, movimento e percentual.</span>
+            <span class="sim-guide-step"><strong>2.</strong> Clique em Aplicar cenário para atualizar Curva S, CAPEX e impactos.</span>
           </div>
 
           <div class="sim-workspace-controls">
@@ -226,8 +232,8 @@
             <div class="sim-curva-header">
               <h4>Curva S</h4>
               <div class="sim-curva-tabs">
-                <button id="tab-curva-percentual" class="sim-curva-tab sim-curva-tab-active" type="button">Percentual</button>
-                <button id="tab-curva-capex" class="sim-curva-tab" type="button">CAPEX</button>
+                <button id="tab-curva-percentual" class="sim-curva-tab sim-curva-tab-active" type="button" aria-selected="true">Percentual</button>
+                <button id="tab-curva-capex" class="sim-curva-tab" type="button" aria-selected="false">CAPEX</button>
               </div>
             </div>
             <div class="sim-curve-legend">
