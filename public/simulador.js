@@ -146,11 +146,20 @@ async function carregarProjetos() {
   const params    = new URLSearchParams();
   if (diretoria) params.set("diretoriaId", diretoria);
   if (programa)  params.set("programaId",  programa);
-  if (busca)     params.set("busca",        busca);
 
   const res  = await fetch(`/api/projetos?${params}`, { headers: authHeaders() });
   const data = await res.json();
-  projetos   = data.projetos || [];
+  const projetosBase = data.projetos || [];
+  projetos = busca
+    ? projetosBase.filter((p) => {
+        const nome = textoBusca(p.nome);
+        const diretoriaNome = textoBusca(p.diretoria);
+        const programaNome = textoBusca(p.programa);
+        const escopoNome = textoBusca(p.escopo);
+        const termo = textoBusca(busca);
+        return nome.includes(termo) || diretoriaNome.includes(termo) || programaNome.includes(termo) || escopoNome.includes(termo);
+      })
+    : projetosBase;
   preencherSelectObras();
   renderTabela();
   atualizarMatchList();
