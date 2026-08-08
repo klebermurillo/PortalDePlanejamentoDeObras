@@ -34,6 +34,42 @@ function fmtPercent(v) {
   return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(v)}%`;
 }
 
+function corrigirTextoBanco(value) {
+  if (value === null || value === undefined) return "";
+
+  const text = String(value);
+  const hasMojibake = /Ã.|Â.|â.|Ê|�/.test(text);
+  if (!hasMojibake) return text;
+
+  try {
+    const bytes = Uint8Array.from(text, (char) => char.charCodeAt(0));
+    return new TextDecoder("utf-8").decode(bytes);
+  } catch (_error) {
+    return text;
+  }
+}
+
+function textoDisplay(value, fallback = "—") {
+  const text = corrigirTextoBanco(value).trim();
+  return text || fallback;
+}
+
+function textoBusca(value) {
+  return corrigirTextoBanco(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function slugStatus(value) {
+  return corrigirTextoBanco(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -56,7 +92,7 @@ function preencherSelectObras() {
   projetos.forEach((p) => {
     const opt = document.createElement("option");
     opt.value = String(p.id);
-    opt.textContent = p.nome;
+    opt.textContent = textoDisplay(p.nome);
     select.appendChild(opt);
   });
 
@@ -83,7 +119,7 @@ async function carregarDiretorias() {
   data.forEach(d => {
     const opt = document.createElement("option");
     opt.value = d.id;
-    opt.textContent = d.nome;
+    opt.textContent = textoDisplay(d.nome, "Diretoria");
     sel.appendChild(opt);
   });
 }
@@ -97,7 +133,7 @@ async function carregarProgramas(diretoriaId) {
   data.forEach(p => {
     const opt = document.createElement("option");
     opt.value = p.id;
-    opt.textContent = p.nome;
+    opt.textContent = textoDisplay(p.nome, "Programa");
     sel.appendChild(opt);
   });
 }
@@ -142,14 +178,14 @@ function renderTabela() {
     const ativo = projetoAtivo?.id === p.id;
     if (ativo) tr.classList.add("sim-row-active");
     tr.innerHTML = `
-      <td class="sim-td-nome">${p.nome}</td>
-      <td>${p.diretoria}</td>
-      <td>${p.programa}</td>
-      <td>${p.escopo || "—"}</td>
+      <td class="sim-td-nome">${textoDisplay(p.nome)}</td>
+      <td>${textoDisplay(p.diretoria)}</td>
+      <td>${textoDisplay(p.programa)}</td>
+      <td>${textoDisplay(p.escopo)}</td>
       <td>${fmtCapex(p.capexEstimado)}</td>
       <td>${p.anoContratual || "—"}</td>
       <td>${p.anoReal || "—"}</td>
-      <td><span class="sim-status sim-status-${(p.status || "").toLowerCase().replace(/\s/g, "-")}">${p.status || "—"}</span></td>
+      <td><span class="sim-status sim-status-${slugStatus(p.status || "")}">${textoDisplay(p.status)}</span></td>
     `;
     tr.style.cursor = "pointer";
     tr.addEventListener("click", () => selecionarProjeto(p));
@@ -168,9 +204,9 @@ function selecionarProjeto(p) {
   document.getElementById("atual-capex").textContent         = fmtCapex(p.capexEstimado);
   document.getElementById("atual-ano-contratual").textContent = p.anoContratual || "—";
   document.getElementById("atual-ano-real").textContent       = p.anoReal || "—";
-  document.getElementById("atual-diretoria").textContent      = p.diretoria;
-  document.getElementById("atual-programa").textContent       = p.programa;
-  document.getElementById("atual-escopo").textContent         = p.escopo || "—";
+  document.getElementById("atual-diretoria").textContent      = textoDisplay(p.diretoria);
+  document.getElementById("atual-programa").textContent       = textoDisplay(p.programa);
+  document.getElementById("atual-escopo").textContent         = textoDisplay(p.escopo);
 
   document.getElementById("btn-salvar").disabled = false;
   document.getElementById("btn-apagar").hidden   = true;
@@ -183,22 +219,22 @@ function selecionarProjeto(p) {
 
 // ── Busca sidebar ─────────────────────────────────────────────────────────────
 function atualizarMatchList() {
-  const busca = document.getElementById("busca-sidebar").value.trim().toLowerCase();
+  const busca = textoBusca(document.getElementById("busca-sidebar").value.trim());
   const lista = document.getElementById("lista-matches");
   lista.innerHTML = "";
 
   if (!busca) { lista.hidden = true; return; }
 
-  const matches = projetos.filter(p => p.nome.toLowerCase().includes(busca)).slice(0, 8);
+  const matches = projetos.filter(p => textoBusca(p.nome).includes(busca)).slice(0, 8);
   if (matches.length === 0) { lista.hidden = true; return; }
 
   matches.forEach(p => {
     const li = document.createElement("li");
     li.className = "sim-match-item";
-    li.textContent = p.nome;
+    li.textContent = textoDisplay(p.nome);
     li.addEventListener("click", () => {
       selecionarProjeto(p);
-      document.getElementById("busca-sidebar").value = p.nome;
+      document.getElementById("busca-sidebar").value = textoDisplay(p.nome);
       lista.hidden = true;
     });
     lista.appendChild(li);
@@ -226,16 +262,16 @@ function renderSimulacoes() {
   simulacoes.forEach(s => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="sim-td-nome">${s.nomeProjeto}</td>
-      <td>${s.diretoria}</td>
-      <td>${s.programa}</td>
+      <td class="sim-td-nome">${textoDisplay(s.nomeProjeto)}</td>
+      <td>${textoDisplay(s.diretoria)}</td>
+      <td>${textoDisplay(s.programa)}</td>
       <td>${fmtCapex(s.capexEstimadoAtual)}</td>
       <td>${fmtCapex(s.capexEstimadoSim)}</td>
       <td>${s.anoContratualAtual || "—"}</td>
       <td>${s.anoContratualSim || "—"}</td>
       <td>${s.anoRealAtual || "—"}</td>
       <td>${s.anoRealSim || "—"}</td>
-      <td class="sim-td-contexto">${s.contexto || "—"}</td>
+      <td class="sim-td-contexto">${textoDisplay(s.contexto)}</td>
       <td>${s.dataSimulacao ? new Date(s.dataSimulacao).toLocaleDateString("pt-BR") : "—"}</td>
       <td>
         <button class="sim-btn sim-btn-sm" data-acao="editar" data-id="${s.id}">Editar</button>
