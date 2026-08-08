@@ -83,7 +83,7 @@ export async function importarDadosDeArquivoExcel(fileBuffer: Uint8Array, usuari
       getCell(row, "ENTREGAVEL"),
       getCell(row, "CAPEX ESTIMADO ATUAL"),
       getCell(row, "CAPEX ESTIMADO SIM"),
-      getCell(row, "ANO ANTT SIM"),
+      getCell(row, "ANO CONTRATUAL SIM"),
       getCell(row, "ANO REAL SIM"),
       getCell(row, "PONTO DE ATENCAO"),
       getCell(row, "CONTEXTO")
@@ -100,7 +100,7 @@ export async function importarDadosDeArquivoExcel(fileBuffer: Uint8Array, usuari
       entregavel: String(getCell(row, "ENTREGAVEL") ?? "").trim() || undefined,
       capexEstimadoAtual: toNumber(getCell(row, "CAPEX ESTIMADO ATUAL")),
       capexEstimadoSim: toNumber(getCell(row, "CAPEX ESTIMADO SIM")),
-      anoAnttSim: String(getCell(row, "ANO ANTT SIM") ?? "").trim() || undefined,
+      anoContratualSim: String(getCell(row, "ANO CONTRATUAL SIM") ?? "").trim() || undefined,
       anoRealSim: String(getCell(row, "ANO REAL SIM") ?? "").trim() || undefined,
       pontoAtencao: String(getCell(row, "PONTO DE ATENCAO") ?? "").trim() || undefined,
       contexto: String(getCell(row, "CONTEXTO") ?? "").trim() || undefined

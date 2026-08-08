@@ -5,7 +5,7 @@ export type RegistroSimulador = {
   entregavel?: string;
   capexEstimadoAtual?: number;
   capexEstimadoSim?: number;
-  anoAnttSim?: string;
+  anoContratualSim?: string;
   anoRealSim?: string;
   pontoAtencao?: string;
   contexto?: string;

@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS simulador_registros (
   entregavel            VARCHAR(255)    NULL,
   capex_estimado_atual  DECIMAL(18, 2)  NULL,
   capex_estimado_sim    DECIMAL(18, 2)  NULL,
-  ano_antt_sim          VARCHAR(10)     NULL,
+  ano_contratual_sim    VARCHAR(10)     NULL,
   ano_real_sim          VARCHAR(10)     NULL,
   ponto_atencao         TEXT            NULL,
   contexto              TEXT            NULL,

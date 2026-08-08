@@ -31,7 +31,7 @@ export async function getDb(): Promise<Database> {
           entregavel TEXT,
           capex_estimado_atual REAL,
           capex_estimado_sim REAL,
-          ano_antt_sim TEXT,
+          ano_contratual_sim TEXT,
           ano_real_sim TEXT,
           ponto_atencao TEXT,
           contexto TEXT,

@@ -251,7 +251,7 @@ function payloadFromForm() {
     entregavel: String(data.get("entregavel") || "").trim() || undefined,
     capexEstimadoAtual: data.get("capexEstimadoAtual") ? Number(data.get("capexEstimadoAtual")) : undefined,
     capexEstimadoSim: data.get("capexEstimadoSim") ? Number(data.get("capexEstimadoSim")) : undefined,
-    anoAnttSim: String(data.get("anoAnttSim") || "").trim() || undefined,
+    anoContratualSim: String(data.get("anoContratualSim") || "").trim() || undefined,
     anoRealSim: String(data.get("anoRealSim") || "").trim() || undefined,
     pontoAtencao: String(data.get("pontoAtencao") || "").trim() || undefined,
     contexto: String(data.get("contexto") || "").trim() || undefined
@@ -263,7 +263,7 @@ function preencherForm(registro) {
   form.entregavel.value = registro.entregavel || "";
   form.capexEstimadoAtual.value = registro.capexEstimadoAtual ?? "";
   form.capexEstimadoSim.value = registro.capexEstimadoSim ?? "";
-  form.anoAnttSim.value = registro.anoAnttSim || "";
+  form.anoContratualSim.value = registro.anoContratualSim || "";
   form.anoRealSim.value = registro.anoRealSim || "";
   form.pontoAtencao.value = registro.pontoAtencao || "";
   form.contexto.value = registro.contexto || "";

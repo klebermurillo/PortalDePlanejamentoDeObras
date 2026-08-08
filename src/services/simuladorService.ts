@@ -11,7 +11,7 @@ export type SimuladorRegistro = {
   entregavel?: string;
   capexEstimadoAtual?: number;
   capexEstimadoSim?: number;
-  anoAnttSim?: string;
+  anoContratualSim?: string;
   anoRealSim?: string;
   pontoAtencao?: string;
   contexto?: string;
@@ -26,7 +26,7 @@ export type NovoRegistroInput = {
   entregavel?: string;
   capexEstimadoAtual?: number;
   capexEstimadoSim?: number;
-  anoAnttSim?: string;
+  anoContratualSim?: string;
   anoRealSim?: string;
   pontoAtencao?: string;
   contexto?: string;
@@ -44,7 +44,7 @@ type DbRegistro = {
   entregavel: string | null;
   capex_estimado_atual: number | null;
   capex_estimado_sim: number | null;
-  ano_antt_sim: string | null;
+  ano_contratual_sim: string | null;
   ano_real_sim: string | null;
   ponto_atencao: string | null;
   contexto: string | null;
@@ -61,7 +61,7 @@ function mapDbRegistro(registro: DbRegistro): SimuladorRegistro {
     entregavel: registro.entregavel ?? undefined,
     capexEstimadoAtual: registro.capex_estimado_atual ?? undefined,
     capexEstimadoSim: registro.capex_estimado_sim ?? undefined,
-    anoAnttSim: registro.ano_antt_sim ?? undefined,
+    anoContratualSim: registro.ano_contratual_sim ?? undefined,
     anoRealSim: registro.ano_real_sim ?? undefined,
     pontoAtencao: registro.ponto_atencao ?? undefined,
     contexto: registro.contexto ?? undefined,
@@ -90,13 +90,13 @@ export async function criarRegistroSimulador(input: NovoRegistroInput): Promise<
   const { insertId } = await execute(
     `INSERT INTO simulador_registros
       (id_primavera, usuario, data_simulacao, entregavel, capex_estimado_atual,
-       capex_estimado_sim, ano_antt_sim, ano_real_sim, ponto_atencao, contexto)
+       capex_estimado_sim, ano_contratual_sim, ano_real_sim, ponto_atencao, contexto)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       idPrimaveraInterno, usuarioInterno,
       input.dataSimulacao ?? null, input.entregavel ?? null,
       input.capexEstimadoAtual ?? null, input.capexEstimadoSim ?? null,
-      input.anoAnttSim ?? null, input.anoRealSim ?? null,
+      input.anoContratualSim ?? null, input.anoRealSim ?? null,
       input.pontoAtencao ?? null, input.contexto ?? null
     ]
   );
@@ -117,13 +117,13 @@ export async function atualizarRegistroSimulador(id: number, input: NovoRegistro
     `UPDATE simulador_registros
      SET id_primavera = ?, usuario = ?, data_simulacao = ?, entregavel = ?,
          capex_estimado_atual = ?, capex_estimado_sim = ?,
-         ano_antt_sim = ?, ano_real_sim = ?, ponto_atencao = ?, contexto = ?
+         ano_contratual_sim = ?, ano_real_sim = ?, ponto_atencao = ?, contexto = ?
      WHERE id = ?`,
     [
       idPrimaveraInterno, usuarioInterno,
       input.dataSimulacao ?? null, input.entregavel ?? null,
       input.capexEstimadoAtual ?? null, input.capexEstimadoSim ?? null,
-      input.anoAnttSim ?? null, input.anoRealSim ?? null,
+      input.anoContratualSim ?? null, input.anoRealSim ?? null,
       input.pontoAtencao ?? null, input.contexto ?? null,
       id
     ]
@@ -151,13 +151,13 @@ export async function importarExcelParaSimulador(fileBuffer: Uint8Array, usuario
       await conn.execute(
         `INSERT INTO simulador_registros
           (id_primavera, usuario, data_simulacao, entregavel, capex_estimado_atual,
-           capex_estimado_sim, ano_antt_sim, ano_real_sim, ponto_atencao, contexto)
+           capex_estimado_sim, ano_contratual_sim, ano_real_sim, ponto_atencao, contexto)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registro.idPrimavera, registro.usuario,
           registro.dataSimulacao ?? null, registro.entregavel ?? null,
           registro.capexEstimadoAtual ?? null, registro.capexEstimadoSim ?? null,
-          registro.anoAnttSim ?? null, registro.anoRealSim ?? null,
+          registro.anoContratualSim ?? null, registro.anoRealSim ?? null,
           registro.pontoAtencao ?? null, registro.contexto ?? null
         ]
       );
@@ -182,7 +182,7 @@ export async function gerarTemplateSimuladorExcel(): Promise<Buffer> {
     { header: "ENTREGAVEL", key: "entregavel", width: 30 },
     { header: "CAPEX ESTIMADO ATUAL", key: "capexAtual", width: 22 },
     { header: "CAPEX ESTIMADO SIM", key: "capexSim", width: 22 },
-    { header: "ANO ANTT SIM", key: "anoAnttSim", width: 14 },
+    { header: "ANO CONTRATUAL SIM", key: "anoContratualSim", width: 16 },
     { header: "ANO REAL SIM", key: "anoRealSim", width: 14 },
     { header: "PONTO DE ATENCAO", key: "pontoAtencao", width: 30 },
     { header: "CONTEXTO", key: "contexto", width: 40 }
@@ -193,7 +193,7 @@ export async function gerarTemplateSimuladorExcel(): Promise<Buffer> {
     entregavel: "Ampliação de patio",
     capexAtual: 15000000,
     capexSim: 16200000,
-    anoAnttSim: "2028",
+    anoContratualSim: "2028",
     anoRealSim: "2029",
     pontoAtencao: "Licenciamento ambiental",
     contexto: "Dependencia de desapropriacao"

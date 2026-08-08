@@ -40,7 +40,7 @@ const registroSchema = z.object({
   entregavel: z.string().optional(),
   capexEstimadoAtual: z.number().optional(),
   capexEstimadoSim: z.number().optional(),
-  anoAnttSim: z.string().optional(),
+  anoContratualSim: z.string().optional(),
   anoRealSim: z.string().optional(),
   pontoAtencao: z.string().optional(),
   contexto: z.string().optional()
