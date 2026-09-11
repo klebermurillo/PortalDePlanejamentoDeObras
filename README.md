@@ -1,12 +1,15 @@
-# 🏗️ Portal de Planejamento de Obras
+# 🏗️ SIGPO — Sistema Integrado de Gestão e Planejamento de Obras
 
-Plataforma integrada para precificação de atividades, planejamento de obras e simulação de cenários. Permite análise de custos, cronogramas, multas, outorgas e impactos operacionais, apoiando a tomada de decisão em projetos de infraestrutura. Este backend em Node.js/TypeScript substitui as rotinas antes executadas por PowerApps/Power Automate.
+Plataforma web de apoio à tomada de decisão em projetos de infraestrutura, integrando planejamento, análise de custos, cronogramas, indicadores de desempenho (EVM/Curva S) e simulação de cenários. Este backend em Node.js/TypeScript substitui as rotinas antes executadas por PowerApps/Power Automate.
+
+> O módulo de tarifas (precificação, outorga e multas) é mantido apenas como modelo/protótipo para uma fase futura; o foco atual do sistema é o planejamento de obras.
 
 ## 🎯 Objetivos
 
-1. Consolidar em uma única plataforma web os dados de planejamento antes espalhados entre PowerApps, Power Automate e SharePoint.
-2. Permitir a simulação de cenários (custo, prazo, risco, outorga e multa) sem alterar a base oficial de projetos.
-3. Fornecer relatórios, gráficos e importação/exportação de planilhas Excel para apoiar decisões de engenharia e planejamento.
+1. Centralizar em uma única plataforma as informações de planejamento, custos e cronogramas hoje fragmentadas entre planilhas e ferramentas descentralizadas.
+2. Aplicar conceitos de gerenciamento de valor agregado (EVM) para análise de desempenho de prazo e custo.
+3. Permitir a simulação de cenários (reprogramação de obras, custos e prazos) sem alterar a base oficial de projetos, apoiando a priorização de investimentos.
+4. Implementar controle de acesso por perfil de usuário para preservar a integridade das análises.
 
 ## 📁 Estrutura do Projeto
 
@@ -19,10 +22,10 @@ PortalDePlanejamentoDeObras/
 ├── docs/                 # Documentação funcional e de migração
 │   ├── migracao-powerapps-portal.md
 │   └── processo-mvp-portal.md
-├── public/               # Frontend estático (portal, simulador, tarifador)
+├── public/               # Frontend estático (portal e simulador de planejamento)
 │   ├── index.html
 │   ├── simulador.html / simulador.js / simulador.css
-│   ├── tarifador.html
+│   ├── tarifador.html   # protótipo do módulo futuro de tarifas
 │   └── theme.js
 ├── src/                  # Código-fonte da API
 │   ├── server.ts         # Bootstrap do servidor Express
@@ -67,8 +70,8 @@ npm run dev
 4. Acessar o site com o servidor rodando:
 
 - Home do portal: `http://localhost:3000/`
-- Simulador de cenários: `http://localhost:3000/simulador.html`
-- Tarifador: `http://localhost:3000/tarifador.html`
+- Simulador de cenários (planejamento de obras): `http://localhost:3000/simulador.html`
+- Tarifador (protótipo de modelo futuro): `http://localhost:3000/tarifador.html`
 
 ## 🔌 Endpoints da API
 
@@ -95,14 +98,18 @@ Em produção, esses valores serão substituídos pela autenticação real do po
 
 O schema, o modelo de entidade-relacionamento (MER) e a descrição de cada tabela estão documentados em [database/README.md](database/README.md).
 
-## 🖥️ Módulo Simulador de Cenários
+## 🖥️ Módulo de Planejamento e Simulação de Cenários
 
 - Dashboard executivo com comparativo entre cenário atual e novo cenário
-- Curva S em SVG gerada localmente no navegador
-- Indicadores de aderência atual e simulada
-- Painel de parâmetros para simular custo, prazo, risco, outorga e multa
+- Curva S (planejada x realizada) gerada localmente no navegador
+- Indicadores de aderência (EVM: SPI, CPI, SV, CV) atual e simulada
+- Painel de parâmetros para simular custo, prazo e reprogramação de obras
 - Resumo consolidado do cenário com leitura executiva
 - Área operacional com cadastro manual, importação Excel e tabela de registros
+
+### Módulo futuro: Tarifador
+
+O tarifador (`public/tarifador.html` e tabela `tarifador_registros`) é um protótipo de modelo para uma fase futura de precificação, ainda sem rotas de API implementadas.
 
 ## 💾 Persistência
 
