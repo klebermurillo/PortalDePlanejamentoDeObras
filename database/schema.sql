@@ -149,6 +149,22 @@ CREATE TABLE IF NOT EXISTS tarifador_registros (
   INDEX idx_tarifador_usuario (usuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------
+-- Configuracoes da empresa — parametros globais e genericos
+-- usados no calculo de impacto financeiro das simulacoes
+-- (registro unico, id fixo = 1)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS configuracoes_empresa (
+  id                INT PRIMARY KEY DEFAULT 1,
+  taxa_juros        DECIMAL(8, 4) NOT NULL DEFAULT 0,
+  multa_ativa       TINYINT(1)    NOT NULL DEFAULT 0,
+  multa_percentual  DECIMAL(8, 4) NOT NULL DEFAULT 0,
+  meta_desempenho   DECIMAL(8, 4) NOT NULL DEFAULT 0,
+  updated_at        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO configuracoes_empresa (id) VALUES (1);
+
 -- ============================================================
 -- Usuario de aplicacao
 -- ============================================================
