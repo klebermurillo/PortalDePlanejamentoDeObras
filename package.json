@@ -1,8 +1,8 @@
 {
-  "name": "portal-planejamento-obras",
+  "name": "sigpo",
   "version": "1.0.0",
   "private": true,
-  "description": "Backend do portal para substituir PowerApps/Power Automate no simulador.",
+  "description": "SIGPO - Sistema Integrado de Gestao e Planejamento de Obras.",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc -p tsconfig.json",

@@ -3,14 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tarifador</title>
+    <title>Tarifador — SIGPO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="toolbar">
+    <div class="toolbar" style="justify-content: space-between; align-items: center;">
+      <div id="usuario-logado" class="actions" style="margin: 0;"></div>
       <button id="theme-toggle" class="theme-toggle" type="button">Tema</button>
     </div>
     <main class="shell">
@@ -48,6 +49,7 @@
     </main>
 
     <script src="/theme.js"></script>
+    <script src="/auth.js"></script>
     <script>
       const form = document.getElementById('tarifador-form');
       const output = document.getElementById('tarifa-resultado');

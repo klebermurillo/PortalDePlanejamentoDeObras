@@ -3,21 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Portal de Planejamento de Obras</title>
+    <title>SIGPO — Sistema Integrado de Gestão e Planejamento de Obras</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="toolbar">
+    <div class="toolbar" style="justify-content: space-between; align-items: center;">
+      <div id="usuario-logado" class="actions" style="margin: 0;"></div>
       <button id="theme-toggle" class="theme-toggle" type="button">Tema</button>
     </div>
     <main class="shell portal-home">
       <section class="portal-hero">
         <div class="portal-hero-copy">
-          <span class="portal-kicker">Portal Operacional</span>
-          <h1>Portal de Planejamento de Obras</h1>
+          <span class="portal-kicker">SIGPO</span>
+          <h1>Sistema Integrado de Gestão e Planejamento de Obras</h1>
           <p>
             Ambiente único para simulação, cadastro e cálculo técnico. Nesta fase,
             o fluxo de massa é feito por upload de Excel com processamento direto no portal.
@@ -96,5 +97,6 @@
       </section>
     </main>
     <script src="/theme.js"></script>
+    <script src="/auth.js"></script>
   </body>
 </html>

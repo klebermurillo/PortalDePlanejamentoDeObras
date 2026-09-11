@@ -238,6 +238,19 @@ html {
 
 .sim-header-right {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sim-header-right .usuario-logado-info {
+  font-size: 0.82rem;
+  color: var(--sim-muted);
+  white-space: nowrap;
+}
+
+.sim-header-right .usuario-logado-info small {
+  opacity: 0.75;
 }
 
 /* ── Layout principal ──────────────────────────────────────────────────────── */
