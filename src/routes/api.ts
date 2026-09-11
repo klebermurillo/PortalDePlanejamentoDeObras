@@ -17,7 +17,12 @@ import {
   listarProjetos,
   buscarProjetoPorId,
   listarDiretorias,
-  listarProgramas
+  criarDiretoria,
+  listarProgramas,
+  criarPrograma,
+  criarProjeto,
+  atualizarProjeto,
+  excluirProjeto
 } from "../services/projetosService";
 import {
   listarSimulacoes,
@@ -25,6 +30,13 @@ import {
   atualizarSimulacao,
   excluirSimulacao
 } from "../services/simulacoesService";
+import {
+  listarUsuarios,
+  criarUsuario,
+  atualizarUsuario,
+  excluirUsuario
+} from "../services/usuariosService";
+import { getConfiguracao, atualizarConfiguracao } from "../services/configuracaoService";
 
 const upload = multer({ storage: multer.memoryStorage() });
 export const apiRouter = express.Router();
@@ -39,6 +51,14 @@ function getAuthContext(req: Request): { usuario: string; perfil: PerfilAcesso }
     usuario: usuarioHeader || "usuario_demo",
     perfil: perfilHeader === "adm" ? "adm" : "usuario"
   };
+}
+
+// Restringe cadastro/edicao de obras, usuarios e parametros da empresa ao perfil administrador.
+function requireAdmin(req: Request, res: Response, next: () => void) {
+  if (getAuthContext(req).perfil !== "adm") {
+    return res.status(403).json({ error: "Acesso restrito ao perfil administrador." });
+  }
+  return next();
 }
 
 apiRouter.get("/health", (_req: Request, res: Response) => {
@@ -292,11 +312,154 @@ apiRouter.get("/diretorias", async (_req: Request, res: Response) => {
   return res.status(200).json(diretorias);
 });
 
+apiRouter.post("/diretorias", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const body = z.object({ nome: z.string().min(1) }).parse(req.body ?? {});
+    const created = await criarDiretoria(body.nome);
+    return res.status(201).json(created);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
+});
+
 apiRouter.get("/programas", async (req: Request, res: Response) => {
   const programas = await listarProgramas(
     req.query.diretoriaId ? Number(req.query.diretoriaId) : undefined
   );
   return res.status(200).json(programas);
+});
+
+apiRouter.post("/programas", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const body = z.object({ nome: z.string().min(1), diretoriaId: z.number().int().positive() }).parse(req.body ?? {});
+    const created = await criarPrograma(body.nome, body.diretoriaId);
+    return res.status(201).json(created);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
+});
+
+const projetoSchema = z.object({
+  idProjeto: z.string().min(1),
+  nome: z.string().min(1),
+  programaId: z.number().int().positive(),
+  escopo: z.string().optional(),
+  capexRegulatorio: z.number().optional(),
+  capexEstimado: z.number().optional(),
+  anoContratual: z.string().optional(),
+  anoReal: z.string().optional(),
+  status: z.string().optional()
+});
+
+apiRouter.post("/projetos", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const body = projetoSchema.parse(req.body ?? {});
+    const created = await criarProjeto(body);
+    return res.status(201).json(created);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
+});
+
+apiRouter.put("/projetos/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "ID invalido." });
+
+    const body = projetoSchema.partial().parse(req.body ?? {});
+    const updated = await atualizarProjeto(id, body);
+    if (!updated) return res.status(404).json({ error: "Projeto nao encontrado." });
+    return res.status(200).json(updated);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
+});
+
+apiRouter.delete("/projetos/:id", requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "ID invalido." });
+  const deleted = await excluirProjeto(id);
+  if (!deleted) return res.status(404).json({ error: "Projeto nao encontrado." });
+  return res.status(204).send();
+});
+
+// ── Usuarios (cadastro restrito ao administrador) ────────────────────────────
+
+const usuarioSchema = z.object({
+  nome: z.string().min(1),
+  email: z.string().email(),
+  senha: z.string().min(6).optional(),
+  perfil: z.enum(["adm", "usuario"]),
+  ativo: z.boolean().optional()
+});
+
+apiRouter.get("/usuarios", requireAdmin, async (_req: Request, res: Response) => {
+  const usuarios = await listarUsuarios();
+  return res.status(200).json(usuarios);
+});
+
+apiRouter.post("/usuarios", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const body = usuarioSchema.parse(req.body ?? {});
+    if (!body.senha) return res.status(400).json({ error: "Senha e obrigatoria." });
+    const created = await criarUsuario(body);
+    return res.status(201).json(created);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
+});
+
+apiRouter.put("/usuarios/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "ID invalido." });
+
+    const body = usuarioSchema.partial().parse(req.body ?? {});
+    const updated = await atualizarUsuario(id, body);
+    if (!updated) return res.status(404).json({ error: "Usuario nao encontrado." });
+    return res.status(200).json(updated);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
+});
+
+apiRouter.delete("/usuarios/:id", requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "ID invalido." });
+  const deleted = await excluirUsuario(id);
+  if (!deleted) return res.status(404).json({ error: "Usuario nao encontrado." });
+  return res.status(204).send();
+});
+
+// ── Configuracoes da empresa (juros, multa, meta) ────────────────────────────
+
+apiRouter.get("/configuracoes", async (_req: Request, res: Response) => {
+  const configuracao = await getConfiguracao();
+  return res.status(200).json(configuracao);
+});
+
+const configuracaoSchema = z.object({
+  taxaJuros: z.number().min(0).optional(),
+  multaAtiva: z.boolean().optional(),
+  multaPercentual: z.number().min(0).optional(),
+  metaDesempenho: z.number().min(0).optional()
+});
+
+apiRouter.put("/configuracoes", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const body = configuracaoSchema.parse(req.body ?? {});
+    const updated = await atualizarConfiguracao(body);
+    return res.status(200).json(updated);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
 });
 
 // ── Simulacoes (cenarios do usuario) ─────────────────────────────────────────
