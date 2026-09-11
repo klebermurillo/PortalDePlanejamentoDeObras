@@ -103,3 +103,13 @@ export async function excluirUsuario(id: number): Promise<boolean> {
   const { affectedRows } = await execute("DELETE FROM usuarios WHERE id = ?", [id]);
   return affectedRows > 0;
 }
+
+export async function autenticar(email: string, senha: string): Promise<Usuario | null> {
+  const row = await queryOne<DbUsuario & { senha_hash: string }>(
+    "SELECT id, nome, email, senha_hash, perfil, ativo, created_at FROM usuarios WHERE email = ?",
+    [email]
+  );
+  if (!row || !row.ativo) return null;
+  if (!verificarSenha(senha, row.senha_hash)) return null;
+  return mapUsuario(row);
+}

@@ -34,7 +34,8 @@ import {
   listarUsuarios,
   criarUsuario,
   atualizarUsuario,
-  excluirUsuario
+  excluirUsuario,
+  autenticar
 } from "../services/usuariosService";
 import { getConfiguracao, atualizarConfiguracao } from "../services/configuracaoService";
 
@@ -63,6 +64,27 @@ function requireAdmin(req: Request, res: Response, next: () => void) {
 
 apiRouter.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ ok: true });
+});
+
+// ── Autenticacao ──────────────────────────────────────────────────────────────
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  senha: z.string().min(1)
+});
+
+apiRouter.post("/auth/login", async (req: Request, res: Response) => {
+  try {
+    const body = loginSchema.parse(req.body ?? {});
+    const usuario = await autenticar(body.email, body.senha);
+    if (!usuario) {
+      return res.status(401).json({ error: "E-mail ou senha invalidos." });
+    }
+    return res.status(200).json(usuario);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(400).json({ error: message });
+  }
 });
 
 const registroSchema = z.object({
