@@ -96,4 +96,4 @@ erDiagram
 | `simulacoes`              | Cenários hipotéticos criados pelo usuário a partir de um projeto, sem alterar a base oficial      |
 | `simulacoes_historico`    | Rastreabilidade das ações (`criacao`, `edicao`, `exclusao`) feitas sobre uma simulação            |
 | `simulador_registros`     | Registros operacionais do simulador, cadastrados manualmente ou importados via Excel              |
-| `tarifador_registros`     | Base do módulo de tarifador (próxima fase): custo, margem, risco e tarifa simulada                |
+| `tarifador_registros`     | Modelo futuro (protótipo): base para o módulo de precificação/tarifas, ainda sem uso no fluxo atual de planejamento |
