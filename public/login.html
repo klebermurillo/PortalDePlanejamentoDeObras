@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrar — SIGPO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="toolbar">
+      <button id="theme-toggle" class="theme-toggle">Tema</button>
+    </div>
+
+    <main class="shell" style="max-width: 460px;">
+      <span class="portal-kicker">SIGPO</span>
+      <h1>Entrar</h1>
+      <p style="color: var(--muted);">Acesse com seu e-mail e senha para usar o simulador, cadastros e demais módulos.</p>
+
+      <form id="form-login" class="panel">
+        <div class="field-block">
+          <label for="login-email">E-mail</label>
+          <input id="login-email" type="email" required autocomplete="username" />
+        </div>
+        <div class="field-block">
+          <label for="login-senha">Senha</label>
+          <input id="login-senha" type="password" required autocomplete="current-password" />
+        </div>
+        <p id="login-erro" style="color: var(--danger); display: none;"></p>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+        </div>
+      </form>
+
+      <div class="panel">
+        <span class="panel-kicker">Usuários de demonstração</span>
+        <p style="color: var(--muted); margin-top: 0;">Clique em um perfil para preencher o formulário automaticamente (senha: <code>demo123</code>).</p>
+        <div class="actions" id="usuarios-demo"></div>
+      </div>
+    </main>
+
+    <script src="/theme.js"></script>
+    <script src="/auth.js"></script>
+    <script src="/login.js"></script>
+  </body>
+</html>
