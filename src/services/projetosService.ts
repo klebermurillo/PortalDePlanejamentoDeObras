@@ -1,4 +1,4 @@
-import { query, queryOne } from "../db/mysql";
+import { execute, query, queryOne } from "../db/mysql";
 
 export type Diretoria = { id: number; nome: string };
 export type Programa  = { id: number; nome: string; diretoriaId: number };
@@ -94,6 +94,11 @@ export async function listarDiretorias(): Promise<Diretoria[]> {
   return query<Diretoria>("SELECT id, nome FROM diretorias ORDER BY nome");
 }
 
+export async function criarDiretoria(nome: string): Promise<Diretoria> {
+  const { insertId } = await execute("INSERT INTO diretorias (nome) VALUES (?)", [nome]);
+  return { id: insertId, nome };
+}
+
 export async function listarProgramas(diretoriaId?: number): Promise<Programa[]> {
   if (diretoriaId) {
     return query<{ id: number; nome: string; diretoria_id: number }>(
@@ -105,3 +110,67 @@ export async function listarProgramas(diretoriaId?: number): Promise<Programa[]>
     "SELECT id, nome, diretoria_id FROM programas ORDER BY nome"
   ).then(rows => rows.map(r => ({ id: r.id, nome: r.nome, diretoriaId: r.diretoria_id })));
 }
+
+export async function criarPrograma(nome: string, diretoriaId: number): Promise<Programa> {
+  const { insertId } = await execute("INSERT INTO programas (nome, diretoria_id) VALUES (?, ?)", [nome, diretoriaId]);
+  return { id: insertId, nome, diretoriaId };
+}
+
+export type ProjetoInput = {
+  idProjeto: string;
+  nome: string;
+  programaId: number;
+  escopo?: string;
+  capexRegulatorio?: number;
+  capexEstimado?: number;
+  anoContratual?: string;
+  anoReal?: string;
+  status?: string;
+};
+
+export async function criarProjeto(input: ProjetoInput): Promise<ProjetoFull> {
+  const { insertId } = await execute(
+    `INSERT INTO projetos
+       (id_projeto, nome, programa_id, escopo, capex_regulatorio, capex_estimado, ano_contratual, ano_real, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      input.idProjeto, input.nome, input.programaId,
+      input.escopo ?? null, input.capexRegulatorio ?? null, input.capexEstimado ?? null,
+      input.anoContratual ?? null, input.anoReal ?? null, input.status ?? null
+    ]
+  );
+
+  const created = await buscarProjetoPorId(insertId);
+  if (!created) throw new Error("Nao foi possivel criar projeto.");
+  return created;
+}
+
+export async function atualizarProjeto(id: number, input: Partial<ProjetoInput>): Promise<ProjetoFull | null> {
+  const existing = await buscarProjetoPorId(id);
+  if (!existing) return null;
+
+  const campos: string[] = [];
+  const params: unknown[] = [];
+
+  if (input.idProjeto !== undefined)        { campos.push("id_projeto = ?");        params.push(input.idProjeto); }
+  if (input.nome !== undefined)             { campos.push("nome = ?");              params.push(input.nome); }
+  if (input.programaId !== undefined)       { campos.push("programa_id = ?");       params.push(input.programaId); }
+  if (input.escopo !== undefined)           { campos.push("escopo = ?");            params.push(input.escopo); }
+  if (input.capexRegulatorio !== undefined) { campos.push("capex_regulatorio = ?"); params.push(input.capexRegulatorio); }
+  if (input.capexEstimado !== undefined)    { campos.push("capex_estimado = ?");    params.push(input.capexEstimado); }
+  if (input.anoContratual !== undefined)    { campos.push("ano_contratual = ?");    params.push(input.anoContratual); }
+  if (input.anoReal !== undefined)          { campos.push("ano_real = ?");          params.push(input.anoReal); }
+  if (input.status !== undefined)           { campos.push("status = ?");            params.push(input.status); }
+
+  if (campos.length === 0) return existing;
+
+  params.push(id);
+  await execute(`UPDATE projetos SET ${campos.join(", ")} WHERE id = ?`, params);
+  return buscarProjetoPorId(id);
+}
+
+export async function excluirProjeto(id: number): Promise<boolean> {
+  const { affectedRows } = await execute("DELETE FROM projetos WHERE id = ?", [id]);
+  return affectedRows > 0;
+}
+
