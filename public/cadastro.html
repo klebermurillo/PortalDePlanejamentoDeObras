@@ -10,8 +10,10 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="toolbar">
+    <div class="toolbar" style="align-items: center;">
       <a href="/" class="btn btn-secondary">← Início</a>
+      <div style="flex: 1;"></div>
+      <div id="usuario-logado" class="actions" style="margin: 0 12px;"></div>
       <button id="theme-toggle" class="theme-toggle">Tema</button>
     </div>
 
@@ -209,6 +211,7 @@
     </main>
 
     <script src="/theme.js"></script>
+    <script src="/auth.js"></script>
     <script src="/cadastro.js"></script>
   </body>
 </html>

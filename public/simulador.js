@@ -1,11 +1,5 @@
 // ── Estado global ─────────────────────────────────────────────────────────────
-const authContext = {
-  userId: localStorage.getItem("portal-user-id") || "usuario_demo",
-  role:   localStorage.getItem("portal-user-role") || "usuario"
-};
-function authHeaders() {
-  return { "x-user-id": authContext.userId, "x-user-role": authContext.role };
-}
+exigirLogin();
 
 let projetos     = [];
 let simulacoes   = [];
