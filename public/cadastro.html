@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro — SIGPO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="toolbar">
+      <a href="/" class="btn btn-secondary">← Início</a>
+      <button id="theme-toggle" class="theme-toggle">Tema</button>
+    </div>
+
+    <main class="shell">
+      <span class="portal-kicker">Área Administrativa</span>
+      <h1>Cadastro</h1>
+      <p id="perfil-aviso" hidden style="color: var(--danger); font-weight: 600;">
+        Esta área é restrita ao perfil administrador. Ajuste seu perfil para "adm" para cadastrar ou editar registros.
+      </p>
+
+      <nav class="actions" role="tablist">
+        <button class="btn btn-primary" data-tab="obras" type="button">Obras</button>
+        <button class="btn btn-secondary" data-tab="usuarios" type="button">Usuários</button>
+        <button class="btn btn-secondary" data-tab="parametros" type="button">Parâmetros da Empresa</button>
+      </nav>
+
+      <!-- ── Obras ─────────────────────────────────────────────────────── -->
+      <section id="tab-obras" class="panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-kicker">Planejamento</span>
+            <h3>Cadastro de Obras</h3>
+          </div>
+        </div>
+
+        <form id="form-obra">
+          <input type="hidden" id="obra-id" />
+          <div class="form-grid">
+            <div class="field-block">
+              <label for="obra-diretoria">Diretoria</label>
+              <select id="obra-diretoria" required></select>
+            </div>
+            <div class="field-block">
+              <label for="obra-nova-diretoria">+ Nova diretoria (opcional)</label>
+              <input id="obra-nova-diretoria" type="text" placeholder="Nome da nova diretoria" />
+            </div>
+            <div class="field-block">
+              <label for="obra-programa">Programa</label>
+              <select id="obra-programa" required></select>
+            </div>
+            <div class="field-block">
+              <label for="obra-novo-programa">+ Novo programa (opcional)</label>
+              <input id="obra-novo-programa" type="text" placeholder="Nome do novo programa" />
+            </div>
+            <div class="field-block">
+              <label for="obra-id-projeto">Código do Projeto</label>
+              <input id="obra-id-projeto" type="text" placeholder="Ex: PRJ-016" required />
+            </div>
+            <div class="field-block">
+              <label for="obra-nome">Nome da Obra</label>
+              <input id="obra-nome" type="text" required />
+            </div>
+            <div class="field-block form-grid-single" style="grid-column: 1 / -1;">
+              <label for="obra-escopo">Escopo</label>
+              <textarea id="obra-escopo" placeholder="Descrição do escopo da obra"></textarea>
+            </div>
+            <div class="field-block">
+              <label for="obra-capex-regulatorio">CAPEX Regulatório (R$)</label>
+              <input id="obra-capex-regulatorio" type="number" step="0.01" />
+            </div>
+            <div class="field-block">
+              <label for="obra-capex-estimado">CAPEX Estimado (R$)</label>
+              <input id="obra-capex-estimado" type="number" step="0.01" />
+            </div>
+            <div class="field-block">
+              <label for="obra-ano-contratual">Ano Contratual</label>
+              <input id="obra-ano-contratual" type="text" placeholder="Ex: 2027" />
+            </div>
+            <div class="field-block">
+              <label for="obra-ano-real">Ano Real/Tendência</label>
+              <input id="obra-ano-real" type="text" placeholder="Ex: 2028" />
+            </div>
+            <div class="field-block">
+              <label for="obra-status">Status</label>
+              <input id="obra-status" type="text" placeholder="Ex: Em execução" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">Salvar Obra</button>
+            <button type="button" id="btn-cancelar-obra" class="btn btn-secondary" hidden>Cancelar edição</button>
+          </div>
+        </form>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th><th>Nome</th><th>Diretoria</th><th>Programa</th>
+                <th>CAPEX Estimado</th><th>Ano Contratual</th><th>Ano Real</th><th>Status</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-obras"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Usuários ──────────────────────────────────────────────────── -->
+      <section id="tab-usuarios" class="panel" hidden>
+        <div class="panel-heading">
+          <div>
+            <span class="panel-kicker">Acessos</span>
+            <h3>Cadastro de Usuários</h3>
+          </div>
+        </div>
+
+        <form id="form-usuario">
+          <input type="hidden" id="usuario-id" />
+          <div class="form-grid">
+            <div class="field-block">
+              <label for="usuario-nome">Nome</label>
+              <input id="usuario-nome" type="text" required />
+            </div>
+            <div class="field-block">
+              <label for="usuario-email">E-mail</label>
+              <input id="usuario-email" type="email" required />
+            </div>
+            <div class="field-block">
+              <label for="usuario-senha">Senha</label>
+              <input id="usuario-senha" type="password" placeholder="Mínimo 6 caracteres" />
+            </div>
+            <div class="field-block">
+              <label for="usuario-perfil">Perfil</label>
+              <select id="usuario-perfil" required>
+                <option value="usuario">Usuário</option>
+                <option value="adm">Administrador</option>
+              </select>
+            </div>
+            <div class="field-block">
+              <label for="usuario-ativo">Ativo</label>
+              <select id="usuario-ativo">
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">Salvar Usuário</button>
+            <button type="button" id="btn-cancelar-usuario" class="btn btn-secondary" hidden>Cancelar edição</button>
+          </div>
+        </form>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Ativo</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="tbody-usuarios"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Parâmetros da Empresa ─────────────────────────────────────── -->
+      <section id="tab-parametros" class="panel" hidden>
+        <div class="panel-heading">
+          <div>
+            <span class="panel-kicker">Regras de Negócio</span>
+            <h3>Parâmetros Globais da Empresa</h3>
+          </div>
+        </div>
+        <p style="color: var(--muted);">
+          Esses parâmetros são genéricos e usados no cálculo de impacto financeiro das simulações
+          (reajuste, multa contratual e meta de desempenho do portfólio).
+        </p>
+
+        <form id="form-parametros">
+          <div class="form-grid">
+            <div class="field-block">
+              <label for="param-juros">Taxa de Juros/Reajuste (% a.a.)</label>
+              <input id="param-juros" type="number" step="0.01" min="0" />
+            </div>
+            <div class="field-block">
+              <label for="param-multa-ativa">Há multa contratual?</label>
+              <select id="param-multa-ativa">
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+            <div class="field-block">
+              <label for="param-multa-percentual">Multa (%)</label>
+              <input id="param-multa-percentual" type="number" step="0.01" min="0" />
+            </div>
+            <div class="field-block">
+              <label for="param-meta">Meta de Desempenho da Empresa (%)</label>
+              <input id="param-meta" type="number" step="0.01" min="0" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">Salvar Parâmetros</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="/theme.js"></script>
+    <script src="/cadastro.js"></script>
+  </body>
+</html>
