@@ -1,5 +1,7 @@
 import { closePool } from "../db/mysql";
 import { criarUsuario, listarUsuarios } from "../services/usuariosService";
+import { createInterface } from "node:readline/promises";
+import { z } from "zod";
 
 function perguntarSenha(prompt: string): Promise<string> {
   const input = process.stdin;
@@ -43,21 +45,45 @@ function perguntarSenha(prompt: string): Promise<string> {
 
 async function main(): Promise<void> {
   try {
-    const [nome, email] = process.argv.slice(2);
-    if (!nome || !email) {
+    const argumentos = process.argv.slice(2);
+    const somenteSeVazio = argumentos.includes("--if-empty");
+    const [nomeInformado, emailInformado] = argumentos.filter((arg) => arg !== "--if-empty");
+    if (!somenteSeVazio && (!nomeInformado || !emailInformado)) {
       throw new Error('Uso: npm run admin:create -- "Nome do administrador" admin@empresa.com');
     }
 
     if ((await listarUsuarios()).length > 0) {
+      if (somenteSeVazio) {
+        console.log("Já existe usuário cadastrado; o administrador inicial foi ignorado.");
+        return;
+      }
       throw new Error("O bootstrap só é permitido quando ainda não existem usuários cadastrados.");
     }
+
+    let nome = nomeInformado;
+    let email = emailInformado;
+    if (somenteSeVazio) {
+      if (!process.stdin.isTTY) throw new Error("Execute o bootstrap em um terminal interativo.");
+      const terminal = createInterface({ input: process.stdin, output: process.stdout });
+      try {
+        nome = (await terminal.question("Nome do primeiro administrador: ")).trim();
+        email = (await terminal.question("E-mail do primeiro administrador: ")).trim();
+      } finally {
+        terminal.close();
+      }
+    }
+
+    const dadosAdmin = z.object({
+      nome: z.string().min(1).max(120),
+      email: z.string().email().max(180)
+    }).parse({ nome, email });
 
     const senha = await perguntarSenha("Senha (mínimo de 12 caracteres): ");
     if (senha.length < 12) throw new Error("A senha deve ter pelo menos 12 caracteres.");
     const confirmacao = await perguntarSenha("Confirme a senha: ");
     if (senha !== confirmacao) throw new Error("As senhas não coincidem.");
 
-    const usuario = await criarUsuario({ nome, email, senha, perfil: "adm" });
+    const usuario = await criarUsuario({ ...dadosAdmin, senha, perfil: "adm" });
     console.log(`Administrador ${usuario.email} criado com sucesso.`);
   } finally {
     await closePool();
