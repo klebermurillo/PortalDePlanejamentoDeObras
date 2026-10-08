@@ -23,6 +23,10 @@ app.use("/api", apiRouter);
 const publicDir = path.resolve("public");
 app.use(express.static(publicDir));
 
+app.get("/favicon.ico", (_req, res) => {
+  res.status(204).end();
+});
+
 app.get("/", (_req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });
