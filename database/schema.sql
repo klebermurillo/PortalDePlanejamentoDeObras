@@ -29,6 +29,16 @@ CREATE TABLE IF NOT EXISTS usuarios (
   INDEX idx_usuarios_perfil (perfil)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS sessoes (
+  id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+  token_hash  CHAR(64)     NOT NULL UNIQUE,
+  usuario_id  INT          NOT NULL,
+  expira_em   DATETIME     NOT NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_sessoes_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  INDEX idx_sessoes_expiracao (expira_em)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- Diretorias — nivel 1 da hierarquia
 -- Ex.: Malha Paulista, Engenharia, Operacoes, Expansao, Via Permanente

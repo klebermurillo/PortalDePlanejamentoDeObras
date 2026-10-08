@@ -1,18 +1,13 @@
-// ── Sessão do usuário (prototipo: localStorage, sem token real) ─────────────
-const AUTH_KEYS = {
-  id: "portal-user-id",
-  role: "portal-user-role",
-  nome: "portal-user-nome"
+const authContext = {
+  userId: "",
+  role: "",
+  nome: ""
 };
 
-const authContext = {
-  userId: localStorage.getItem(AUTH_KEYS.id) || "",
-  role:   localStorage.getItem(AUTH_KEYS.role) || "",
-  nome:   localStorage.getItem(AUTH_KEYS.nome) || ""
-};
+let requisicaoSessao;
 
 function authHeaders(json) {
-  const headers = { "x-user-id": authContext.userId, "x-user-role": authContext.role };
+  const headers = {};
   if (json) headers["Content-Type"] = "application/json";
   return headers;
 }
@@ -21,42 +16,84 @@ function estaLogado() {
   return Boolean(authContext.userId && authContext.role);
 }
 
-function salvarSessao(usuario) {
-  localStorage.setItem(AUTH_KEYS.id, String(usuario.id));
-  localStorage.setItem(AUTH_KEYS.role, usuario.perfil);
-  localStorage.setItem(AUTH_KEYS.nome, usuario.nome);
+function atualizarUsuario(usuario) {
+  authContext.userId = String(usuario.id);
+  authContext.role = usuario.perfil;
+  authContext.nome = usuario.nome;
 }
 
-function logout() {
-  localStorage.removeItem(AUTH_KEYS.id);
-  localStorage.removeItem(AUTH_KEYS.role);
-  localStorage.removeItem(AUTH_KEYS.nome);
-  window.location.href = "/login.html";
+function limparUsuario() {
+  authContext.userId = "";
+  authContext.role = "";
+  authContext.nome = "";
 }
 
-// Redireciona para o login quando a pagina exige sessao ativa.
-function exigirLogin() {
-  if (!estaLogado()) {
+function carregarSessao() {
+  if (!requisicaoSessao) {
+    requisicaoSessao = fetch("/api/auth/session")
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Sessão ausente");
+        atualizarUsuario(await res.json());
+        return true;
+      })
+      .catch(() => {
+        limparUsuario();
+        return false;
+      });
+  }
+  return requisicaoSessao;
+}
+
+async function salvarSessao(usuario) {
+  atualizarUsuario(usuario);
+  requisicaoSessao = Promise.resolve(true);
+}
+
+async function logout() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST" });
+  } finally {
+    limparUsuario();
+    requisicaoSessao = Promise.resolve(false);
     window.location.href = "/login.html";
   }
 }
 
-// Preenche um container com nome do usuario, perfil e botao de sair.
-function montarUsuarioLogado(elementId) {
+async function exigirLogin() {
+  if (!(await carregarSessao())) {
+    window.location.href = "/login.html";
+    return false;
+  }
+  return true;
+}
+
+async function montarUsuarioLogado(elementId) {
   const el = document.getElementById(elementId);
   if (!el) return;
 
-  if (!estaLogado()) {
-    el.innerHTML = `<a href="/login.html" class="btn btn-secondary">Entrar</a>`;
+  const logado = await carregarSessao();
+  el.replaceChildren();
+
+  if (!logado || !estaLogado()) {
+    const entrar = document.createElement("a");
+    entrar.href = "/login.html";
+    entrar.className = "btn btn-secondary";
+    entrar.textContent = "Entrar";
+    el.append(entrar);
     return;
   }
 
   const perfilLabel = authContext.role === "adm" ? "Administrador" : "Usuário";
-  el.innerHTML = `
-    <span class="usuario-logado-info">${authContext.nome} <small>(${perfilLabel})</small></span>
-    <button id="btn-logout" class="btn btn-secondary" type="button">Sair</button>
-  `;
-  document.getElementById("btn-logout").addEventListener("click", logout);
+  const info = document.createElement("span");
+  info.className = "usuario-logado-info";
+  info.textContent = `${authContext.nome} (${perfilLabel})`;
+
+  const sair = document.createElement("button");
+  sair.className = "btn btn-secondary";
+  sair.type = "button";
+  sair.textContent = "Sair";
+  sair.addEventListener("click", logout);
+  el.append(info, sair);
 }
 
 // Preenchimento automatico do bloco de usuario logado, se presente na pagina.

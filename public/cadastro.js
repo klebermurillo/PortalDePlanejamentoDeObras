@@ -1,6 +1,4 @@
 // ── Autenticação (compartilhada via auth.js) ────────────────────────────────
-exigirLogin();
-
 let diretorias = [];
 let programas  = [];
 let obraEmEdicaoId = null;
@@ -275,6 +273,7 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
 
 // ── Inicialização ───────────────────────────────────────────────────────────
 (async function init() {
+  if (!(await exigirLogin())) return;
   aplicarGuardaPerfil();
   await carregarDiretorias();
   await carregarProgramas();

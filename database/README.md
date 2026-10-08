@@ -17,6 +17,7 @@ erDiagram
     PROJETOS ||--o{ SIMULACOES : gera
     SIMULACOES ||--o{ SIMULACOES_HISTORICO : registra
     USUARIOS ||--o{ SIMULACOES : cria
+    USUARIOS ||--o{ SESSOES : autentica
 
     DIRETORIAS {
         int id PK
@@ -66,6 +67,13 @@ erDiagram
         string perfil
         boolean ativo
     }
+    SESSOES {
+        bigint id PK
+        string token_hash UK
+        int usuario_id FK
+        datetime expira_em
+        datetime created_at
+    }
     SIMULADOR_REGISTROS {
         int id PK
         string id_projeto
@@ -90,6 +98,7 @@ erDiagram
 | Tabela                   | Descrição                                                                                     |
 | ------------------------ | ----------------------------------------------------------------------------------------------- |
 | `usuarios`                | Usuários do portal e seu perfil de acesso (`adm` ou `usuario`)                                  |
+| `sessoes`                 | Sessões de login; armazena o hash do token e sua expiração, vinculados ao usuário               |
 | `diretorias`              | Nível 1 da hierarquia de planejamento (ex.: Malha Paulista, Engenharia)                          |
 | `programas`               | Nível 2, agrupa projetos com o mesmo objetivo, vinculado a uma diretoria                          |
 | `projetos`                | Nível 3, empreendimento específico dentro de um programa; base oficial somente leitura           |

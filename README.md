@@ -31,10 +31,9 @@ PortalDePlanejamentoDeObras/
 │   ├── server.ts         # Bootstrap do servidor Express
 │   ├── config.ts         # Variáveis de ambiente e configuração
 │   ├── types.ts          # Tipos compartilhados
-│   ├── db/               # Conexões com banco (SQLite / MySQL)
+│   ├── db/               # Conexão com banco MySQL
 │   ├── routes/           # Definição das rotas HTTP
 │   └── services/         # Regras de negócio (import, relatórios, gráficos, simulações)
-├── data/                 # Banco SQLite local (gerado em runtime)
 └── tmp/relatorios/       # Relatórios gerados temporariamente
 ```
 
@@ -44,34 +43,41 @@ PortalDePlanejamentoDeObras/
 | ------------------ | ---------------------------------------------- |
 | Runtime / Linguagem | Node.js, TypeScript                            |
 | API                | Express, Zod (validação), Multer (upload)      |
-| Banco de dados     | SQLite (local/dev) e MySQL (`mysql2`, produção) |
+| Banco de dados     | MySQL (`mysql2`) |
 | Relatórios         | Puppeteer (PDF), ExcelJS (planilhas)           |
 
-## ⚙️ Como Usar
+## ⚙️ Instalação e uso local
 
-1. Instalar dependências:
+Requisitos: Node.js compatível com o projeto, npm e MySQL 8 ou compatível.
 
-```bash
-npm install
-```
-
-2. Configurar variáveis de ambiente:
+1. Instale as dependências e prepare o arquivo local de ambiente:
 
 ```bash
+npm ci
 cp .env.example .env
 ```
 
-3. Subir o ambiente de desenvolvimento:
+2. Crie o banco e as tabelas. Configure primeiro um usuário MySQL com permissão no servidor e execute:
+
+```bash
+mysql -u root -p < database/schema.sql
+```
+
+Edite `.env` com o host, o usuário e a senha do MySQL. Não use as credenciais de exemplo em ambientes compartilhados.
+
+3. Crie o primeiro administrador. O comando pede a senha sem exibi-la e só funciona se ainda não houver usuários:
+
+```bash
+npm run admin:create -- "Administrador SIGPO" admin@empresa.com
+```
+
+4. Inicie a aplicação:
 
 ```bash
 npm run dev
 ```
 
-4. Acessar o site com o servidor rodando:
-
-- Home do portal: `http://localhost:3000/`
-- Simulador de cenários (planejamento de obras): `http://localhost:3000/simulador.html`
-- Tarifador (protótipo de modelo futuro): `http://localhost:3000/tarifador.html`
+Acesse `http://localhost:3000/` e entre com a conta criada. A carga de demonstração é opcional e pode ser aplicada com `mysql -u root -p portal_obras < database/seed_demo.sql`.
 
 ## 🔌 Endpoints da API
 
@@ -85,14 +91,11 @@ npm run dev
 | POST   | `/api/atualizar-historico`   | Registra histórico de ações do usuário       |
 | POST   | `/api/simulador/upload`      | Importa registros para o simulador via Excel |
 
-### Perfis de acesso
+### Autenticação e perfis de acesso
 
-O prototipo considera dois perfis por contexto de requisição, enviados via headers:
+O login valida a senha armazenada com hash scrypt e cria uma sessão aleatória no MySQL. O navegador recebe apenas um cookie `HttpOnly`, `SameSite=Lax` e, em produção, `Secure`; o token é armazenado no banco somente como hash. O servidor recupera usuário e perfil do banco em cada requisição protegida. Os headers `x-user-id` e `x-user-role` não são usados como identidade. Tentativas de login são limitadas a 10 por endereço IP a cada 15 minutos; novas senhas devem ter pelo menos 12 caracteres.
 
-- `x-user-id`: identificador do usuário
-- `x-user-role`: `adm` (visualiza e gerencia simulações de todos os usuários) ou `usuario` (apenas as próprias simulações)
-
-Em produção, esses valores serão substituídos pela autenticação real do portal.
+O perfil `adm` pode administrar cadastros e parâmetros; o perfil `usuario` trabalha com os próprios registros e simulações. As rotas da API exigem sessão, com exceção de login, logout e verificação de saúde.
 
 ## 🗄️ Banco de Dados
 
@@ -113,8 +116,20 @@ O tarifador (`public/tarifador.html` e tabela `tarifador_registros`) é um prot�
 
 ## 💾 Persistência
 
-- Banco SQLite local: `data/portal.db` (fase inicial, sem dependência de SharePoint)
-- Suporte a MySQL para produção (`src/db/mysql.ts`)
+O fluxo atual da aplicação utiliza MySQL. `database/schema.sql` cria as tabelas, incluindo sessões; `database/seed_demo.sql` contém dados demonstrativos e não cria usuários.
+
+## 🚀 Publicação
+
+O processo de deploy depende da infraestrutura escolhida. Em produção:
+
+- configure `NODE_ENV=production`, `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` e `DB_PASSWORD` no gerenciador de segredos do ambiente. `SESSION_TTL_SECONDS` e `TRUST_PROXY_HOPS` também podem ser ajustados;
+- use HTTPS no proxy/domínio e mantenha a aplicação e o navegador na mesma origem; o cookie de sessão terá o atributo `Secure`; se houver proxy reverso, configure `TRUST_PROXY_HOPS` para a quantidade de proxies confiáveis;
+- crie o banco, aplique o schema e faça o bootstrap do primeiro administrador antes de iniciar o serviço;
+- instale as bibliotecas nativas de sistema exigidas pelo Chromium do Puppeteer para gerar relatórios PDF em Linux;
+- execute `npm ci`, `npm run build` e `npm start`;
+- configure backups do MySQL, monitoramento, política de atualização e procedimento de restauração antes de liberar dados reais.
+
+O endpoint `GET /api/health` verifica a disponibilidade do processo, não a conectividade com o banco. O repositório ainda não define um provedor de hospedagem ou pipeline de deploy.
 
 ## 📚 Documentação
 

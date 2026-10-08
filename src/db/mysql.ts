@@ -20,6 +20,12 @@ export function getPool(): mysql.Pool {
   return pool;
 }
 
+export async function closePool(): Promise<void> {
+  if (!pool) return;
+  await pool.end();
+  pool = null;
+}
+
 export async function query<T>(sql: string, params?: unknown[]): Promise<T[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [rows] = await getPool().execute(sql, params as any);

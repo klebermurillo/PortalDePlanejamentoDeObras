@@ -1,6 +1,4 @@
 // ── Estado global ─────────────────────────────────────────────────────────────
-exigirLogin();
-
 let projetos     = [];
 let simulacoes   = [];
 let projetoAtivo = null;
@@ -972,6 +970,7 @@ document.getElementById("sim-work-tipo").addEventListener("change", aplicarCenar
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 (async () => {
+  if (!(await exigirLogin())) return;
   await carregarDiretorias();
   await carregarProgramas();
   await carregarProjetos();

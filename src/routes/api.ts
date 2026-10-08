@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import rateLimit from "express-rate-limit";
 import multer from "multer";
 import { z } from "zod";
 import { importarDadosDeArquivoExcel } from "../services/excelImportService";
@@ -38,28 +39,42 @@ import {
   autenticar
 } from "../services/usuariosService";
 import { getConfiguracao, atualizarConfiguracao } from "../services/configuracaoService";
+import { criarSessao, excluirSessao, type UsuarioSessao } from "../services/sessoesService";
+import { exigirAdministrador as requireAdmin, exigirSessao, lerTokenSessao } from "../middleware/auth";
+import { config } from "../config";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 }
+});
 export const apiRouter = express.Router();
+const limitarTentativasLogin = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Muitas tentativas de login. Tente novamente em alguns minutos." }
+});
 
-type PerfilAcesso = "adm" | "usuario";
-
-function getAuthContext(req: Request): { usuario: string; perfil: PerfilAcesso } {
-  const usuarioHeader = String(req.headers["x-user-id"] ?? "").trim();
-  const perfilHeader = String(req.headers["x-user-role"] ?? "").trim().toLowerCase();
-
-  return {
-    usuario: usuarioHeader || "usuario_demo",
-    perfil: perfilHeader === "adm" ? "adm" : "usuario"
-  };
+function getAuthContext(req: Request): { usuario: string; perfil: "adm" | "usuario" } {
+  const usuario = req.usuarioAutenticado as UsuarioSessao;
+  return { usuario: String(usuario.id), perfil: usuario.perfil };
 }
 
-// Restringe cadastro/edicao de obras, usuarios e parametros da empresa ao perfil administrador.
-function requireAdmin(req: Request, res: Response, next: () => void) {
-  if (getAuthContext(req).perfil !== "adm") {
-    return res.status(403).json({ error: "Acesso restrito ao perfil administrador." });
-  }
-  return next();
+function definirCookieSessao(res: Response, token: string): void {
+  const secure = config.nodeEnv === "production" ? "; Secure" : "";
+  res.setHeader(
+    "Set-Cookie",
+    `sigpo_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${config.sessionTtlSeconds}${secure}`
+  );
+}
+
+function limparCookieSessao(res: Response): void {
+  const secure = config.nodeEnv === "production" ? "; Secure" : "";
+  res.setHeader(
+    "Set-Cookie",
+    `sigpo_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`
+  );
 }
 
 apiRouter.get("/health", (_req: Request, res: Response) => {
@@ -73,18 +88,38 @@ const loginSchema = z.object({
   senha: z.string().min(1)
 });
 
-apiRouter.post("/auth/login", async (req: Request, res: Response) => {
+apiRouter.post("/auth/login", limitarTentativasLogin, async (req: Request, res: Response) => {
   try {
     const body = loginSchema.parse(req.body ?? {});
     const usuario = await autenticar(body.email, body.senha);
     if (!usuario) {
       return res.status(401).json({ error: "E-mail ou senha invalidos." });
     }
+    const token = await criarSessao(usuario.id);
+    definirCookieSessao(res, token);
     return res.status(200).json(usuario);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado";
     return res.status(400).json({ error: message });
   }
+});
+
+apiRouter.post("/auth/logout", async (req: Request, res: Response) => {
+  try {
+    const token = lerTokenSessao(req);
+    if (token) await excluirSessao(token);
+    limparCookieSessao(res);
+    return res.status(204).send();
+  } catch {
+    limparCookieSessao(res);
+    return res.status(500).json({ error: "Não foi possível encerrar a sessão." });
+  }
+});
+
+apiRouter.use(exigirSessao);
+
+apiRouter.get("/auth/session", (req: Request, res: Response) => {
+  return res.status(200).json(req.usuarioAutenticado);
 });
 
 const registroSchema = z.object({
@@ -414,7 +449,7 @@ apiRouter.delete("/projetos/:id", requireAdmin, async (req: Request, res: Respon
 const usuarioSchema = z.object({
   nome: z.string().min(1),
   email: z.string().email(),
-  senha: z.string().min(6).optional(),
+  senha: z.string().min(12).optional(),
   perfil: z.enum(["adm", "usuario"]),
   ativo: z.boolean().optional()
 });

@@ -1,16 +1,14 @@
-# Processo MVP do Portal (sem Microsoft)
+# Processo MVP do SIGPO
 
 ## Escopo desta fase
 
-1. Tela inicial com acesso para dois sistemas:
-- Simulador de Cenarios
-- Tarifador
+1. Portal web com acesso ao Simulador de Cenários, aos cadastros administrativos e ao protótipo do Tarifador.
 
-2. Operacao local sem PowerApps/Power Automate e sem integração com SharePoint.
+2. Operação independente de PowerApps/Power Automate e sem integração ativa com SharePoint.
 
-3. Dados mantidos em SQLite local.
+3. Dados operacionais mantidos em MySQL.
 
-4. Sem autenticacao nesta etapa.
+4. Login por e-mail e senha, com sessão armazenada no servidor e perfis de administrador e usuário.
 
 ## Fluxo Simulador
 
@@ -33,7 +31,8 @@
 2. Simulador: `/simulador.html`
 3. Tarifador: `/tarifador.html`
 
-## Observacoes
+## Observações
 
-1. O backend atual ja possui API para o Simulador e servico de PDF.
-2. Integrações futuras permanecem desacopladas e podem ser adicionadas sem depender de SharePoint.
+1. O backend possui API para o Simulador, importação de Excel e geração de PDF.
+2. As simulações e cadastros dependem da configuração MySQL descrita no README principal.
+3. Integrações futuras permanecem desacopladas e podem ser adicionadas sem depender de SharePoint.
