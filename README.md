@@ -109,7 +109,7 @@ O schema, o modelo de entidade-relacionamento (MER) e a descrição de cada tabe
 
 ### Módulo futuro: Tarifador
 
-O tarifador (`public/tarifador.html` e tabela `tarifador_registros`) é um protótipo de modelo para uma fase futura de precificação, ainda sem rotas de API implementadas.
+O tarifador (`public/tarifador.html`) é um protótipo de modelo para uma fase futura de precificação, ainda sem rotas de API ou persistência; o cálculo atual é executado localmente por `public/tarifador.js`.
 
 ## 💾 Persistência
 
