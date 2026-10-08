@@ -98,6 +98,21 @@
           </div>
         </form>
 
+        <section class="project-import-section" aria-labelledby="project-import-title">
+          <div>
+            <span class="panel-kicker">Importação em lote</span>
+            <h3 id="project-import-title">Projetos por Excel</h3>
+            <p>O cadastro individual e a edição continuam disponíveis no formulário e na tabela abaixo. Para vários projetos, baixe o modelo, preencha uma linha por projeto e importe o arquivo .xlsx.</p>
+          </div>
+          <div class="actions project-import-actions">
+            <a class="btn btn-secondary" href="/api/projetos/template">Baixar modelo XLSX</a>
+            <label class="project-file-label" for="arquivo-projetos-excel">Planilha .xlsx</label>
+            <input id="arquivo-projetos-excel" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+            <button id="btn-importar-projetos" type="button" class="btn btn-primary">Importar projetos</button>
+          </div>
+          <p id="projetos-import-msg" class="msg" role="status" aria-live="polite"></p>
+        </section>
+
         <div class="table-wrap">
           <table>
             <thead>

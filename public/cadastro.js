@@ -24,8 +24,9 @@ function aplicarGuardaPerfil() {
   const aviso = document.getElementById("perfil-aviso");
   const isAdm = authContext.role === "adm";
   aviso.hidden = isAdm;
-  document.querySelectorAll("#form-obra button, #form-usuario button, #form-parametros button").forEach((btn) => {
+  document.querySelectorAll("#form-obra button, #form-usuario button, #form-parametros button, #btn-importar-projetos, #arquivo-projetos-excel").forEach((btn) => {
     btn.disabled = !isAdm && btn.type === "submit";
+    if (!isAdm && (btn.id === "btn-importar-projetos" || btn.id === "arquivo-projetos-excel")) btn.disabled = true;
   });
 }
 
@@ -111,6 +112,53 @@ async function excluirObra(id) {
   if (res.ok || res.status === 204) carregarObras();
   else alert("Não foi possível excluir a obra.");
 }
+
+async function importarProjetosExcel() {
+  const input = document.getElementById("arquivo-projetos-excel");
+  const botao = document.getElementById("btn-importar-projetos");
+  const mensagem = document.getElementById("projetos-import-msg");
+  const arquivo = input.files?.[0];
+
+  if (!arquivo) {
+    mensagem.className = "msg error";
+    mensagem.textContent = "Selecione uma planilha XLSX para importar.";
+    return;
+  }
+
+  const dados = new FormData();
+  dados.append("arquivo", arquivo);
+  botao.disabled = true;
+  mensagem.className = "msg";
+  mensagem.textContent = "Validando e importando projetos...";
+
+  try {
+    const resposta = await fetch("/api/projetos/importar", {
+      method: "POST",
+      headers: authHeaders(),
+      body: dados
+    });
+    const resultado = await resposta.json().catch(() => ({}));
+    if (!resposta.ok) {
+      throw new Error(resultado.error || "Não foi possível importar a planilha.");
+    }
+
+    mensagem.className = "msg ok";
+    mensagem.textContent = `${resultado.total} projeto(s) importado(s). Diretorias criadas: ${resultado.diretoriasCriadas}; programas criados: ${resultado.programasCriados}.`;
+    input.value = "";
+    const diretoriaAtual = document.getElementById("obra-diretoria").value;
+    await carregarDiretorias();
+    document.getElementById("obra-diretoria").value = diretoriaAtual;
+    await carregarProgramas(diretoriaAtual || undefined);
+    await carregarObras();
+  } catch (error) {
+    mensagem.className = "msg error";
+    mensagem.textContent = error instanceof Error ? error.message : "Falha ao importar a planilha.";
+  } finally {
+    botao.disabled = !authContext.role || authContext.role !== "adm";
+  }
+}
+
+document.getElementById("btn-importar-projetos").addEventListener("click", importarProjetosExcel);
 
 document.getElementById("obra-diretoria").addEventListener("change", (e) => carregarProgramas(Number(e.target.value)));
 

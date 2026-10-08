@@ -81,6 +81,8 @@ Também é possível executar com Node.js, npm e MySQL já instalados. Use `npm 
 | Método | Rota                        | Descrição                                  |
 | ------ | --------------------------- | -------------------------------------------- |
 | GET    | `/api/health`                | Verifica se a API está no ar                |
+| GET    | `/api/projetos/template`     | Baixa o modelo XLSX de cadastro de projetos (administrador) |
+| POST   | `/api/projetos/importar`     | Importa projetos em lote do modelo XLSX (administrador) |
 | POST   | `/api/importar-dados`        | Importa dados de arquivo Excel               |
 | POST   | `/api/graficos/:tipo`        | Gera gráfico (base64) para um dado tipo      |
 | POST   | `/api/relatorios/gerar`      | Gera relatório em PDF                        |
@@ -100,6 +102,7 @@ O schema, o modelo de entidade-relacionamento (MER) e a descrição de cada tabe
 
 ## 🖥️ Módulo de Planejamento e Simulação de Cenários
 
+- Cadastro individual e edição de projetos, com importação em lote pela planilha XLSX padrão disponível na área administrativa
 - Dashboard executivo com comparativo entre cenário atual e novo cenário
 - Curva S (planejada x realizada) gerada localmente no navegador
 - Indicadores de aderência (EVM: SPI, CPI, SV, CV) atual e simulada
