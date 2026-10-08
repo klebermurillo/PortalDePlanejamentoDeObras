@@ -1,0 +1,44 @@
+services:
+  database:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Configure DB_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: portal_obras
+      MYSQL_USER: ${DB_USER:-portal_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD in .env}
+    volumes:
+      - sigpo_database:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    restart: unless-stopped
+
+  app:
+    build: .
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: portal_obras
+      DB_USER: ${DB_USER:-portal_user}
+      DB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD in .env}
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  sigpo_database:

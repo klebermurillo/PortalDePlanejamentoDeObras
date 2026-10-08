@@ -48,36 +48,33 @@ PortalDePlanejamentoDeObras/
 
 ## ⚙️ Instalação e uso local
 
-Requisitos: Node.js compatível com o projeto, npm e MySQL 8 ou compatível.
+Requisito: Docker Desktop (Windows/macOS) ou Docker Engine com Docker Compose v2 (Linux). Como o SIGPO é Node.js/TypeScript, não precisa de Python nem `requirements.txt`; `package.json` e `package-lock.json` controlam as dependências. Os scripts constroem a aplicação, baixam as imagens e o Chrome do Puppeteer, iniciam o MySQL, criam `.env` com senhas aleatórias se o arquivo ainda não existir, aplicam o schema na primeira inicialização do banco, configuram o primeiro administrador e abrem o portal no navegador.
 
-1. Instale as dependências e prepare o arquivo local de ambiente:
-
-```bash
-npm ci
-cp .env.example .env
-```
-
-2. Crie o banco e as tabelas. Configure primeiro um usuário MySQL com permissão no servidor e execute:
+Linux/macOS:
 
 ```bash
-mysql -u root -p < database/schema.sql
+bash ./setup.sh
 ```
 
-Edite `.env` com o host, o usuário e a senha do MySQL. Não use as credenciais de exemplo em ambientes compartilhados.
+Windows PowerShell:
 
-3. Crie o primeiro administrador. O comando pede a senha sem exibi-la e só funciona se ainda não houver usuários:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
+```
+
+Na primeira execução, informe nome, e-mail e uma senha de pelo menos 12 caracteres para o administrador. Execuções seguintes preservam `.env` e o banco existente, sem recriar usuários. Acesse `http://localhost:3000/` (ou a porta definida em `.env`).
+
+Para parar os containers sem apagar os dados:
 
 ```bash
-npm run admin:create -- "Administrador SIGPO" admin@empresa.com
+docker compose down
 ```
 
-4. Inicie a aplicação:
+O volume do MySQL é persistente. `docker compose down -v` apaga esse banco e todos os dados locais. A carga de demonstração não é inserida automaticamente; para carregá-la, use `docker compose exec -T database sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot portal_obras' < database/seed_demo.sql`.
 
-```bash
-npm run dev
-```
+### Execução manual sem Docker
 
-Acesse `http://localhost:3000/` e entre com a conta criada. A carga de demonstração é opcional e pode ser aplicada com `mysql -u root -p portal_obras < database/seed_demo.sql`.
+Também é possível executar com Node.js, npm e MySQL já instalados. Use `npm ci`, configure `.env`, aplique `database/schema.sql`, crie o administrador com `npm run admin:create -- "Nome" email@empresa.com` e inicie com `npm run dev`.
 
 ## 🔌 Endpoints da API
 
