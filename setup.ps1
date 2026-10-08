@@ -10,6 +10,10 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 if (-not (Test-Path ".env")) {
+  Copy-Item ".env.example" ".env"
+}
+
+if (Select-String -Path ".env" -Pattern '^DB_(ROOT_)?PASSWORD=configure-' -Quiet) {
   $bytes = New-Object byte[] 32
   $random = [System.Security.Cryptography.RandomNumberGenerator]::Create()
   try {
@@ -21,13 +25,14 @@ if (-not (Test-Path ".env")) {
     $random.Dispose()
   }
 
-  $environment = (Get-Content ".env.example" -Raw).Replace("configure-uma-senha-forte", $dbPassword).Replace("configure-uma-senha-root-forte", $rootPassword)
+  $environment = (Get-Content ".env" -Raw) -replace '(?m)^DB_PASSWORD=configure-[^\r\n]*', "DB_PASSWORD=$dbPassword"
+  $environment = $environment -replace '(?m)^DB_ROOT_PASSWORD=configure-[^\r\n]*', "DB_ROOT_PASSWORD=$rootPassword"
   [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot ".env"), $environment, [System.Text.UTF8Encoding]::new($false))
-  Write-Host "Arquivo .env criado com senhas aleatorias."
+  Write-Host "Placeholders do MySQL no .env foram substituidos por senhas aleatorias."
 }
 
-if (Select-String -Path ".env" -Pattern '^DB_(ROOT_)?PASSWORD=configure-' -Quiet) {
-  throw ".env ainda contem senhas de exemplo. Edite o arquivo e execute novamente."
+if (-not (Select-String -Path ".env" -Pattern '^DB_PASSWORD=.+$' -Quiet) -or -not (Select-String -Path ".env" -Pattern '^DB_ROOT_PASSWORD=.+$' -Quiet)) {
+  throw "Configure DB_PASSWORD e DB_ROOT_PASSWORD no .env."
 }
 
 Write-Host "Construindo a aplicacao e iniciando o MySQL..."

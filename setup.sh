@@ -17,17 +17,25 @@ fi
 
 if [[ ! -f .env ]]; then
   umask 077
-  db_password="$(openssl rand -hex 32)"
-  db_root_password="$(openssl rand -hex 32)"
-  sed \
-    -e "s/^DB_PASSWORD=.*/DB_PASSWORD=${db_password}/" \
-    -e "s/^DB_ROOT_PASSWORD=.*/DB_ROOT_PASSWORD=${db_root_password}/" \
-    .env.example > .env
-  printf 'Arquivo .env criado com senhas aleatorias.\n'
+  cp .env.example .env
 fi
 
 if grep -Eq '^DB_(ROOT_)?PASSWORD=configure-' .env; then
-  printf 'Erro: .env ainda contem senhas de exemplo. Edite o arquivo e execute novamente.\n' >&2
+  umask 077
+  db_password="$(openssl rand -hex 32)"
+  db_root_password="$(openssl rand -hex 32)"
+  temporary_env="$(mktemp .env.XXXXXX)"
+  sed \
+    -e "s/^DB_PASSWORD=configure-.*/DB_PASSWORD=${db_password}/" \
+    -e "s/^DB_ROOT_PASSWORD=configure-.*/DB_ROOT_PASSWORD=${db_root_password}/" \
+    .env > "$temporary_env"
+  chmod 600 "$temporary_env"
+  mv "$temporary_env" .env
+  printf 'Placeholders do MySQL no .env foram substituidos por senhas aleatorias.\n'
+fi
+
+if ! grep -Eq '^DB_PASSWORD=.+$' .env || ! grep -Eq '^DB_ROOT_PASSWORD=.+$' .env; then
+  printf 'Erro: configure DB_PASSWORD e DB_ROOT_PASSWORD no .env.\n' >&2
   exit 1
 fi
 

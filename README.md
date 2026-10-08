@@ -48,7 +48,7 @@ PortalDePlanejamentoDeObras/
 
 ## ⚙️ Instalação e uso local
 
-Requisito: Docker Desktop (Windows/macOS) ou Docker Engine com Docker Compose v2 (Linux). Como o SIGPO é Node.js/TypeScript, não precisa de Python nem `requirements.txt`; `package.json` e `package-lock.json` controlam as dependências. Os scripts constroem a aplicação, baixam as imagens e o Chrome do Puppeteer, iniciam o MySQL, criam `.env` com senhas aleatórias se o arquivo ainda não existir, aplicam o schema na primeira inicialização do banco, configuram o primeiro administrador e abrem o portal no navegador.
+Requisito: Docker Desktop (Windows/macOS) ou Docker Engine com Docker Compose v2 (Linux). Como o SIGPO é Node.js/TypeScript, não precisa de Python nem `requirements.txt`; `package.json` e `package-lock.json` controlam as dependências. Os scripts constroem a aplicação, baixam as imagens e o Chrome do Puppeteer, iniciam o MySQL, criam `.env` com senhas aleatórias se o arquivo ainda não existir ou substituem apenas os placeholders de banco existentes, aplicam o schema na primeira inicialização do banco, configuram o primeiro administrador e abrem o portal no navegador.
 
 Linux/macOS:
 
