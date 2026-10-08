@@ -1,4 +1,5 @@
-import { execute, query, queryOne } from "../db/mysql";
+import { execute, getPool, query, queryOne } from "../db/mysql";
+import { ErroPlanilhaProjetos, type ProjetoImportadoPlanilha } from "./projetosExcelService";
 
 export type Diretoria = { id: number; nome: string };
 export type Programa  = { id: number; nome: string; diretoriaId: number };
@@ -143,6 +144,86 @@ export async function criarProjeto(input: ProjetoInput): Promise<ProjetoFull> {
   const created = await buscarProjetoPorId(insertId);
   if (!created) throw new Error("Nao foi possivel criar projeto.");
   return created;
+}
+
+export async function importarProjetos(
+  projetos: ProjetoImportadoPlanilha[]
+): Promise<{ total: number; diretoriasCriadas: number; programasCriados: number }> {
+  const conexao = await getPool().getConnection();
+  const diretorias = new Map<string, number>();
+  const programas = new Map<string, number>();
+  let diretoriasCriadas = 0;
+  let programasCriados = 0;
+
+  await conexao.beginTransaction();
+  try {
+    for (const projeto of projetos) {
+      const chaveDiretoria = projeto.diretoria.trim().toLocaleLowerCase("pt-BR");
+      let diretoriaId = diretorias.get(chaveDiretoria);
+
+      if (!diretoriaId) {
+        const [rows] = await conexao.execute("SELECT id FROM diretorias WHERE nome = ? LIMIT 1", [projeto.diretoria]);
+        const existentes = rows as Array<{ id: number }>;
+        diretoriaId = existentes[0]?.id;
+
+        if (!diretoriaId) {
+          const [result] = await conexao.execute("INSERT INTO diretorias (nome) VALUES (?)", [projeto.diretoria]);
+          diretoriaId = (result as { insertId: number }).insertId;
+          diretoriasCriadas += 1;
+        }
+        diretorias.set(chaveDiretoria, diretoriaId);
+      }
+
+      const chavePrograma = `${diretoriaId}:${projeto.programa.trim().toLocaleLowerCase("pt-BR")}`;
+      let programaId = programas.get(chavePrograma);
+      if (!programaId) {
+        const [rows] = await conexao.execute(
+          "SELECT id FROM programas WHERE diretoria_id = ? AND nome = ? LIMIT 1",
+          [diretoriaId, projeto.programa]
+        );
+        const existentes = rows as Array<{ id: number }>;
+        programaId = existentes[0]?.id;
+
+        if (!programaId) {
+          const [result] = await conexao.execute(
+            "INSERT INTO programas (nome, diretoria_id) VALUES (?, ?)",
+            [projeto.programa, diretoriaId]
+          );
+          programaId = (result as { insertId: number }).insertId;
+          programasCriados += 1;
+        }
+        programas.set(chavePrograma, programaId);
+      }
+
+      const [projetosExistentes] = await conexao.execute(
+        "SELECT id FROM projetos WHERE id_projeto = ? LIMIT 1",
+        [projeto.idProjeto]
+      );
+      if ((projetosExistentes as Array<{ id: number }>).length > 0) {
+        throw new ErroPlanilhaProjetos(`O código ${projeto.idProjeto} já existe na base de projetos.`);
+      }
+
+      await conexao.execute(
+        `INSERT INTO projetos
+          (id_projeto, nome, programa_id, escopo, capex_regulatorio, capex_estimado,
+           ano_contratual, ano_real, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          projeto.idProjeto, projeto.nome, programaId, projeto.escopo ?? null,
+          projeto.capexRegulatorio ?? null, projeto.capexEstimado ?? null,
+          projeto.anoContratual ?? null, projeto.anoReal ?? null, projeto.status ?? null
+        ]
+      );
+    }
+
+    await conexao.commit();
+    return { total: projetos.length, diretoriasCriadas, programasCriados };
+  } catch (error) {
+    await conexao.rollback();
+    throw error;
+  } finally {
+    conexao.release();
+  }
 }
 
 export async function atualizarProjeto(id: number, input: Partial<ProjetoInput>): Promise<ProjetoFull | null> {

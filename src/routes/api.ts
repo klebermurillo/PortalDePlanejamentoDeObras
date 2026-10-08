@@ -23,8 +23,10 @@ import {
   criarPrograma,
   criarProjeto,
   atualizarProjeto,
-  excluirProjeto
+  excluirProjeto,
+  importarProjetos
 } from "../services/projetosService";
+import { ErroPlanilhaProjetos, gerarModeloImportacaoProjetos, lerProjetosDaPlanilha } from "../services/projetosExcelService";
 import {
   listarSimulacoes,
   criarSimulacao,
@@ -358,6 +360,18 @@ apiRouter.get("/projetos", async (req: Request, res: Response) => {
   }
 });
 
+apiRouter.get("/projetos/template", requireAdmin, async (_req: Request, res: Response) => {
+  try {
+    const arquivo = await gerarModeloImportacaoProjetos();
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", 'attachment; filename="modelo_projetos_sigpo.xlsx"');
+    return res.status(200).send(arquivo);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(500).json({ error: message });
+  }
+});
+
 apiRouter.get("/projetos/:id", async (req: Request, res: Response) => {
   const projeto = await buscarProjetoPorId(Number(req.params.id));
   if (!projeto) return res.status(404).json({ error: "Projeto nao encontrado." });
@@ -418,6 +432,21 @@ apiRouter.post("/projetos", requireAdmin, async (req: Request, res: Response) =>
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado";
     return res.status(400).json({ error: message });
+  }
+});
+
+apiRouter.post("/projetos/importar", requireAdmin, upload.single("arquivo"), async (req: Request, res: Response) => {
+  try {
+    if (!req.file?.buffer) {
+      return res.status(400).json({ error: "Selecione uma planilha Excel no campo arquivo." });
+    }
+
+    const projetos = await lerProjetosDaPlanilha(req.file.buffer);
+    const resultado = await importarProjetos(projetos);
+    return res.status(201).json(resultado);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    return res.status(error instanceof ErroPlanilhaProjetos ? 400 : 500).json({ error: message });
   }
 });
 

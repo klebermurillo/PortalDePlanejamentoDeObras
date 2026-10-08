@@ -106,3 +106,11 @@ erDiagram
 | `simulacoes_historico`    | Rastreabilidade das ações (`criacao`, `edicao`, `exclusao`) feitas sobre uma simulação            |
 | `simulador_registros`     | Registros operacionais do simulador, cadastrados manualmente ou importados via Excel              |
 | `tarifador_registros`     | Modelo futuro (protótipo): base para o módulo de precificação/tarifas, ainda sem uso no fluxo atual de planejamento |
+
+## Cadastro de projetos por planilha
+
+Na tela administrativa de Cadastro, é possível baixar o modelo XLSX e importar vários projetos. Os campos obrigatórios são Diretoria, Programa, ID do Projeto e Nome do Projeto. As outras colunas do modelo são opcionais.
+
+Diretorias e programas que ainda não existirem são criados durante a importação. O ID do projeto deve ser único na planilha e na tabela `projetos`. Todo o lote é validado antes da gravação e inserido em uma transação; se houver linha inválida ou código duplicado, nada do lote é gravado. Os projetos importados aparecem na Base de Projetos e podem ser editados individualmente na mesma tela de Cadastro.
+
+O modelo é gerado por `GET /api/projetos/template`; o envio é feito a `POST /api/projetos/importar`, no campo multipart `arquivo`. Ambos exigem sessão administrativa. A importação cria linhas em `diretorias`, `programas` e `projetos`; não escreve em `simulador_registros`, que é usado para os registros operacionais de simulação.
