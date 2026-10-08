@@ -105,7 +105,7 @@ O schema, o modelo de entidade-relacionamento (MER) e a descrição de cada tabe
 - Indicadores de aderência (EVM: SPI, CPI, SV, CV) atual e simulada
 - Painel de parâmetros para simular custo, prazo e reprogramação de obras
 - Resumo consolidado do cenário com leitura executiva
-- Área operacional com cadastro manual, importação Excel e tabela de registros
+- Área operacional com cadastro manual, importação Excel e tabela própria para conferência dos registros importados
 
 ### Módulo futuro: Tarifador
 

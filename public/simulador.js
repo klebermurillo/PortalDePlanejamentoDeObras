@@ -1,6 +1,7 @@
 // ── Estado global ─────────────────────────────────────────────────────────────
 let projetos     = [];
 let simulacoes   = [];
+let registrosImportados = [];
 let projetoAtivo = null;
 let simAtiva     = null;
 const workspaceState = {
@@ -251,6 +252,53 @@ async function carregarSimulacoes() {
   const data = await res.json();
   simulacoes = data.simulacoes || [];
   renderSimulacoes();
+}
+
+async function carregarRegistrosImportados() {
+  const res = await fetch("/api/simulador/registros", { headers: authHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Falha ao carregar registros importados.");
+
+  registrosImportados = data.registros || [];
+  const tbody = document.getElementById("sim-importados-tbody");
+  document.getElementById("sim-import-total").textContent = `${registrosImportados.length} registro(s)`;
+  tbody.replaceChildren();
+
+  if (registrosImportados.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 9;
+    cell.className = "sim-empty-row";
+    cell.textContent = "Nenhum registro importado.";
+    row.appendChild(cell);
+    tbody.appendChild(row);
+    return;
+  }
+
+  for (const registro of registrosImportados) {
+    const row = document.createElement("tr");
+    const dataSimulacao = registro.dataSimulacao
+      ? new Date(`${registro.dataSimulacao.slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR")
+      : "—";
+    const values = [
+      registro.idProjeto,
+      registro.entregavel,
+      dataSimulacao,
+      fmtCapex(registro.capexEstimadoAtual),
+      fmtCapex(registro.capexEstimadoSim),
+      registro.anoContratualSim,
+      registro.anoRealSim,
+      registro.pontoAtencao,
+      registro.contexto
+    ];
+
+    for (const value of values) {
+      const cell = document.createElement("td");
+      cell.textContent = textoDisplay(value);
+      row.appendChild(cell);
+    }
+    tbody.appendChild(row);
+  }
 }
 
 function renderSimulacoes() {
@@ -867,9 +915,9 @@ document.getElementById("btn-importar-excel").addEventListener("click", async ()
       return;
     }
 
-    mostrarMsgImport(`${data.totalImportado ?? 0} simulação(ões) importada(s) com sucesso.`, "ok");
+    mostrarMsgImport(`${data.totalImportado} registro(s) importado(s). Confira a tabela abaixo.`, "ok");
     input.value = "";
-    await carregarSimulacoes();
+    await carregarRegistrosImportados();
   } catch (error) {
     mostrarMsgImport("Falha ao enviar o arquivo.", "error");
   }
@@ -975,6 +1023,7 @@ document.getElementById("sim-work-tipo").addEventListener("change", aplicarCenar
   await carregarProgramas();
   await carregarProjetos();
   await carregarSimulacoes();
+  await carregarRegistrosImportados();
 
   if (!projetoAtivo && projetos.length > 0) {
     selecionarProjeto(projetos[0]);

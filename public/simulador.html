@@ -149,7 +149,7 @@
             <span class="sim-dados-tipo">Excel</span>
           </div>
           <div class="sim-import-content">
-            <p>Envie uma planilha Excel para carregar simulações em massa. O portal lê o arquivo localmente e cadastra os registros.</p>
+            <p>Importe registros em lote usando os cabeçalhos do modelo. Eles serão exibidos abaixo e não alteram a base oficial de projetos.</p>
             <input id="sim-excel-input" type="file" accept=".xlsx,.xls" />
             <button id="btn-importar-excel" class="sim-btn sim-btn-salvar" type="button">⬆ Importar Excel</button>
             <a class="sim-link" href="/api/simulador/template" target="_blank" rel="noreferrer">Baixar modelo</a>
@@ -333,6 +333,36 @@
         </div>
       </section>
     </div>
+
+    <section class="sim-saved-section sim-imported-section">
+      <div class="sim-saved-header">
+        <div>
+          <span class="panel-kicker">Importação Excel</span>
+          <h3>Registros importados</h3>
+        </div>
+        <span id="sim-import-total" class="sim-table-count">0 registros</span>
+      </div>
+      <div class="table-wrap">
+        <table class="sim-table sim-saved-table">
+          <thead>
+            <tr>
+              <th>ID Projeto</th>
+              <th>Entregável</th>
+              <th>Data</th>
+              <th>CAPEX Atual</th>
+              <th>CAPEX Simulado</th>
+              <th>BL Contratual Sim</th>
+              <th>Real / Tendência Sim</th>
+              <th>Ponto de Atenção</th>
+              <th>Contexto</th>
+            </tr>
+          </thead>
+          <tbody id="sim-importados-tbody">
+            <tr><td colspan="9" class="sim-empty-row">Nenhum registro importado.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <!-- Simulações salvas -->
     <section class="sim-saved-section">
