@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import multer from "multer";
 import { z } from "zod";
-import { importarDadosDeArquivoExcel } from "../services/excelImportService";
+import { ErroPlanilhaSimulador, importarDadosDeArquivoExcel } from "../services/excelImportService";
 import { gerarGraficoBase64 } from "../services/chartService";
 import { gerarRelatorioPdfTemporario, getRelatorioPdf } from "../services/reportService";
 import {
@@ -247,7 +247,7 @@ apiRouter.post("/importar-dados", upload.single("arquivo"), async (req: Request,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado";
-    return res.status(500).json({ error: message });
+    return res.status(error instanceof ErroPlanilhaSimulador ? 400 : 500).json({ error: message });
   }
 });
 
@@ -265,7 +265,7 @@ apiRouter.post("/simulador/upload", upload.single("arquivo"), async (req: Reques
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado";
-    return res.status(500).json({ error: message });
+    return res.status(error instanceof ErroPlanilhaSimulador ? 400 : 500).json({ error: message });
   }
 });
 

@@ -2,6 +2,19 @@ import ExcelJS from "exceljs";
 import { randomUUID } from "node:crypto";
 import { RegistroSimulador } from "../types";
 
+const COLUNAS_IMPORTAVEIS = [
+  "DATA SIMULACAO",
+  "ENTREGAVEL",
+  "CAPEX ESTIMADO ATUAL",
+  "CAPEX ESTIMADO SIM",
+  "ANO CONTRATUAL SIM",
+  "ANO REAL SIM",
+  "PONTO DE ATENCAO",
+  "CONTEXTO"
+];
+
+export class ErroPlanilhaSimulador extends Error {}
+
 function toDateStringFromExcelValue(value: unknown): string | undefined {
   if (typeof value === "number") {
     const epoch = new Date(Date.UTC(1899, 11, 30));
@@ -50,6 +63,12 @@ export async function importarDadosDeArquivoExcel(fileBuffer: Uint8Array, usuari
     }
   });
 
+  if (!COLUNAS_IMPORTAVEIS.some((coluna) => indexByHeader.has(coluna))) {
+    throw new ErroPlanilhaSimulador(
+      "As colunas da planilha não correspondem ao modelo do Simulador. Baixe o modelo atualizado e mantenha os cabeçalhos originais."
+    );
+  }
+
   const getCell = (row: ExcelJS.Row, headerName: string): unknown => {
     const col = indexByHeader.get(headerName.toUpperCase());
     return col ? row.getCell(col).value : undefined;
@@ -89,7 +108,7 @@ export async function importarDadosDeArquivoExcel(fileBuffer: Uint8Array, usuari
       getCell(row, "CONTEXTO")
     ].some(hasMeaningfulValue);
 
-    if (!rowHasData && !idProjetoRaw) {
+    if (!rowHasData) {
       return;
     }
 
@@ -106,6 +125,10 @@ export async function importarDadosDeArquivoExcel(fileBuffer: Uint8Array, usuari
       contexto: String(getCell(row, "CONTEXTO") ?? "").trim() || undefined
     });
   });
+
+  if (result.length === 0) {
+    throw new ErroPlanilhaSimulador("A planilha não contém linhas com dados para importar.");
+  }
 
   return result;
 }
